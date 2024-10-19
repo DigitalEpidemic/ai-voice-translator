@@ -1,8 +1,12 @@
-import { contextBridge } from 'electron'
+import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 
 // Custom APIs for renderer
-const api = {}
+const api = {
+  voiceFileUpload: (byteArray: Uint8Array): void => {
+    ipcRenderer.send('voiceFileUpload', byteArray)
+  }
+}
 
 // Use `contextBridge` APIs to expose Electron APIs to
 // renderer only if context isolation is enabled, otherwise
@@ -20,9 +24,3 @@ if (process.contextIsolated) {
   // @ts-ignore (define in dts)
   window.api = api
 }
-
-const { ipcRenderer } = require('electron/renderer')
-
-contextBridge.exposeInMainWorld('electronAPI', {
-  voiceFileUpload: () => ipcRenderer.invoke('voiceFileUpload')
-})

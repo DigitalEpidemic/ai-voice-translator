@@ -1,22 +1,13 @@
-// import { AssemblyAI } from 'assemblyai'
-
 function App(): JSX.Element {
-  // const client = new AssemblyAI({
-  // })
-
-  const sendFileToService = async (event): Promise<void> => {
+  const sendFileToService = async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
+    if (!event.target.files) {
+      return
+    }
     const audioFile = event.target.files[0]
+    const audioFileArrayBuffer = await audioFile.arrayBuffer()
+    const byteArray = new Uint8Array(audioFileArrayBuffer)
 
-    console.log(audioFile)
-    await window.electronAPI.voiceFileUpload(audioFile)
-
-    // const params = {
-    //   audio: audioFile,
-    //   speaker_labels: true
-    // }
-
-    // const transcript = await client.transcripts.transcribe(params)
-    // console.log(transcript)
+    await window.api.voiceFileUpload(byteArray) // TODO: Change to two-way communication and return transcribed text
   }
 
   return (

@@ -4,6 +4,10 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { AssemblyAI } from 'assemblyai'
 
+const client = new AssemblyAI({
+  apiKey: '' // TODO: Use environment variable
+})
+
 function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
@@ -50,25 +54,16 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  // IPC test
-  ipcMain.on('ping', () => console.log('pong'))
-
   // on File Upload, send it to AssemblyAI
-  ipcMain.handle('voiceFileUpload', async (file): Promise<void> => {
-    const client = new AssemblyAI({
-      apiKey: 'CHANGE ME!!!' // TODO: Use environment variable
-    })
-
-    const audioFile = file
-
-    const params = {
-      audio: audioFile,
-      speaker_labels: true
+  ipcMain.on('voiceFileUpload', async (_, byteArray: Uint8Array): Promise<void> => {
+    try {
+      const transcript = await client.transcripts.transcribe({
+        audio: byteArray
+      })
+      console.log(transcript.text)
+    } catch (e) {
+      console.log(e)
     }
-
-    console.log(params)
-    const transcript = await client.transcripts.transcribe(params)
-    console.log(transcript)
   })
 
   createWindow()
