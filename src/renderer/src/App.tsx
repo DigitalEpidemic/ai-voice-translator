@@ -7,20 +7,24 @@ function App(): JSX.Element {
   const [isStopButtonDisabled, setStopButtonDisabled] = useState(true)
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder>()
   const [audioChunks, setAudioChunks] = useState<Blob[]>([])
+  const [audioFileArrayBuffer, setAudioFileArrayBuffer] = useState<Uint8Array>()
 
-  const sendFileToService = async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
+  const handleAudioFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ): Promise<void> => {
     if (!event.target.files) {
       return
     }
+    setAudioUrl(null)
+
     const audioFile = event.target.files[0]
     const audioFileArrayBuffer = await audioFile.arrayBuffer()
     const byteArray = new Uint8Array(audioFileArrayBuffer)
+    setAudioFileArrayBuffer(byteArray)
 
     const fileBlob = new Blob([byteArray], { type: 'audio/wav' })
     const blobUrl = URL.createObjectURL(fileBlob)
     setAudioUrl(blobUrl)
-
-    await window.api.voiceFileUpload(byteArray) // TODO: Change to two-way communication and return transcribed text
   }
 
   const handleStartRecording = async (): Promise<void> => {
@@ -46,6 +50,7 @@ function App(): JSX.Element {
         const audioBlob = new Blob(audioChunks, { type: 'audio/webm' })
 
         const wavBuffer = await convertWebMToWav(audioBlob)
+        setAudioFileArrayBuffer(wavBuffer)
         // Send the audio data to the main process to save the file
         window.api.saveAudio(wavBuffer, 'recording.wav')
 
@@ -66,7 +71,6 @@ function App(): JSX.Element {
   }
 
   const handleStopRecording = (): void => {
-    console.log(mediaRecorder)
     if (mediaRecorder) {
       mediaRecorder.stop()
       setStartButtonDisabled(false)
@@ -90,10 +94,18 @@ function App(): JSX.Element {
     return new Uint8Array(wavData)
   }
 
+  const transcribeAudioInArrayBuffer = async (): Promise<void> => {
+    if (!audioFileArrayBuffer) {
+      return
+    }
+
+    await window.api.transcribeAudio(audioFileArrayBuffer) // TODO: Change to two-way communication and return transcribed text
+  }
+
   return (
     <>
       <label htmlFor="voice-upload">Upload Voice File</label>
-      <input id="voice-upload" type="file" accept="audio/*" onChange={sendFileToService} />
+      <input id="voice-upload" type="file" accept="audio/*" onChange={handleAudioFileUpload} />
 
       <p>Or</p>
 
@@ -113,6 +125,10 @@ function App(): JSX.Element {
             <source src={audioUrl} type="audio/wav" />
             Your browser does not support the audio element.
           </audio>
+          <div>
+            <button onClick={transcribeAudioInArrayBuffer}>Transcribe</button>
+            <button>Translate</button>
+          </div>
         </div>
       )}
     </>
