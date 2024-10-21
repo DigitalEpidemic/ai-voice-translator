@@ -2,7 +2,8 @@ import { useState } from 'react'
 import WavEncoder from 'wav-encoder'
 
 function App(): JSX.Element {
-  const [audioUrl, setAudioUrl] = useState<string | null>(null)
+  const [originalAudioUrl, setOriginalAudioUrl] = useState<string | null>(null)
+  const [translatedAudioUrl, setTranslatedAudioUrl] = useState<string | null>(null)
   const [isStartButtonDisabled, setStartButtonDisabled] = useState(false)
   const [isStopButtonDisabled, setStopButtonDisabled] = useState(true)
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder>()
@@ -17,7 +18,7 @@ function App(): JSX.Element {
     if (!event.target.files) {
       return
     }
-    setAudioUrl(null)
+    setOriginalAudioUrl(null)
 
     const audioFile = event.target.files[0]
     const audioFileArrayBuffer = await audioFile.arrayBuffer()
@@ -26,12 +27,12 @@ function App(): JSX.Element {
 
     const fileBlob = new Blob([byteArray], { type: 'audio/wav' })
     const blobUrl = URL.createObjectURL(fileBlob)
-    setAudioUrl(blobUrl)
+    setOriginalAudioUrl(blobUrl)
   }
 
   const handleStartRecording = async (): Promise<void> => {
-    if (audioUrl) {
-      setAudioUrl(null)
+    if (originalAudioUrl) {
+      setOriginalAudioUrl(null)
     }
 
     try {
@@ -58,7 +59,7 @@ function App(): JSX.Element {
 
         // Play the audio locally
         const audioUrl = URL.createObjectURL(audioBlob)
-        setAudioUrl(audioUrl)
+        setOriginalAudioUrl(audioUrl)
         setAudioChunks([])
       }
 
@@ -114,6 +115,17 @@ function App(): JSX.Element {
     setTranslatedText(result)
   }
 
+  const handleTextToSpeech = async (): Promise<void> => {
+    if (!translatedText) {
+      return
+    }
+
+    const arrayBuffer = await window.api.textToSpeech(translatedText)
+    const blob = new Blob([arrayBuffer], { type: 'audio/mpeg' })
+    const url = URL.createObjectURL(blob)
+    setTranslatedAudioUrl(url)
+  }
+
   return (
     <>
       <label htmlFor="voice-upload">Upload Voice File</label>
@@ -131,10 +143,10 @@ function App(): JSX.Element {
         </button>
       </div>
 
-      {audioUrl && (
+      {originalAudioUrl && (
         <div>
           <audio controls>
-            <source src={audioUrl} type="audio/wav" />
+            <source src={originalAudioUrl} type="audio/wav" />
             Your browser does not support the audio element.
           </audio>
           <div>
@@ -142,6 +154,16 @@ function App(): JSX.Element {
             <p>{transcription}</p>
             <button onClick={handleTranslatingText}>Translate</button>
             <p>{translatedText}</p>
+          </div>
+
+          <div>
+            <button onClick={handleTextToSpeech}>Use AI Voice 🤖</button>
+            {translatedAudioUrl && (
+              <audio controls>
+                <source src={translatedAudioUrl} type="audio/mp3" />
+                Your browser does not support the audio element.
+              </audio>
+            )}
           </div>
         </div>
       )}

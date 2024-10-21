@@ -2,15 +2,22 @@ import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import { AssemblyAI } from 'assemblyai'
 import dotenv from 'dotenv'
 import { app, BrowserWindow, ipcMain, shell } from 'electron'
+import { ElevenLabsClient } from 'elevenlabs'
 import fs from 'fs'
 import path, { join } from 'path'
+import { Readable } from 'stream'
 import translate from 'translate'
+import { v4 as uuid } from 'uuid'
 import icon from '../../resources/icon.png?asset'
 
 dotenv.config()
 
-const client = new AssemblyAI({
+const assemblyAIClient = new AssemblyAI({
   apiKey: process.env.VITE_ASSEMBLYAI_API_KEY as string
+})
+
+const elevenLabsClient = new ElevenLabsClient({
+  apiKey: process.env.VITE_ELEVENLABS_API_KEY as string
 })
 
 function createWindow(): void {
@@ -84,7 +91,7 @@ app.on('window-all-closed', () => {
 ipcMain.handle('transcribe-audio', async (_, byteArray: Uint8Array): Promise<string> => {
   console.log('Transcribing audio...')
   try {
-    const transcript = await client.transcripts.transcribe({
+    const transcript = await assemblyAIClient.transcripts.transcribe({
       audio: byteArray
     })
     console.log(` ${transcript.text}`)
@@ -122,3 +129,47 @@ ipcMain.handle('translate-text', async (_, text: string): Promise<string> => {
     return 'Error translating text'
   }
 })
+
+ipcMain.handle('text-to-speech', async (_, text: string): Promise<Uint8Array> => {
+  console.log('Generating audio...')
+
+  try {
+    const audioStream = await elevenLabsClient.generate({
+      voice: 'LHEmo0XNW9f1ptZLyVTV', // My voice ID
+      model_id: 'eleven_turbo_v2_5',
+      text
+    })
+
+    // Convert the audio stream to a Node readable stream
+    const readableStream = Readable.from(audioStream)
+    const buffer = await streamToBuffer(readableStream)
+    const intArray = new Uint8Array(buffer)
+
+    const fileName = `${uuid()}.mp3`
+    const appDirectory = app.getAppPath() // Get the current app directory
+    const filePath = path.join(appDirectory, fileName) // Specify the file path
+
+    fs.writeFile(filePath, buffer, (err) => {
+      if (err) {
+        console.error('Failed to save audio file:', err)
+      } else {
+        console.log('Audio saved to:', filePath)
+      }
+    })
+
+    return intArray
+  } catch (error) {
+    console.error('Error generating audio:', error)
+    throw new Error('Audio generation failed')
+  }
+})
+
+// Helper function to convert stream to buffer
+const streamToBuffer = (stream: Readable): Promise<Buffer> => {
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = []
+    stream.on('data', (chunk) => chunks.push(chunk))
+    stream.on('end', () => resolve(Buffer.concat(chunks)))
+    stream.on('error', reject)
+  })
+}
