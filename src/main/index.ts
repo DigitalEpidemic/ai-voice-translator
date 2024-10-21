@@ -4,6 +4,7 @@ import dotenv from 'dotenv'
 import { app, BrowserWindow, ipcMain, shell } from 'electron'
 import fs from 'fs'
 import path, { join } from 'path'
+import translate from 'translate'
 import icon from '../../resources/icon.png?asset'
 
 dotenv.config()
@@ -86,7 +87,7 @@ ipcMain.handle('transcribe-audio', async (_, byteArray: Uint8Array): Promise<str
     const transcript = await client.transcripts.transcribe({
       audio: byteArray
     })
-    console.log(transcript.text)
+    console.log(` ${transcript.text}`)
     return transcript.text ?? ''
   } catch (e) {
     console.log(e)
@@ -106,4 +107,18 @@ ipcMain.on('save-audio', (_, wavBuffer: Uint8Array, filename: string) => {
       console.log('Audio saved to:', filePath)
     }
   })
+})
+
+ipcMain.handle('translate-text', async (_, text: string): Promise<string> => {
+  console.log('Translating text...')
+  translate.engine = 'google'
+
+  try {
+    const result = await translate(text, { to: 'tl' })
+    console.log(` ${result}`)
+    return result
+  } catch (e) {
+    console.log(e)
+    return 'Error translating text'
+  }
 })

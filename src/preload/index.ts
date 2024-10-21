@@ -3,11 +3,11 @@ import { electronAPI } from '@electron-toolkit/preload'
 
 // Custom APIs for renderer
 const api = {
-  transcribeAudio: (byteArray: Uint8Array): Promise<string> => {
-    return ipcRenderer.invoke('transcribe-audio', byteArray)
-  },
+  transcribeAudio: (byteArray: Uint8Array): Promise<string> =>
+    ipcRenderer.invoke('transcribe-audio', byteArray),
   saveAudio: (audioBuffer: Buffer, filename: string): void =>
-    ipcRenderer.send('save-audio', audioBuffer, filename)
+    ipcRenderer.send('save-audio', audioBuffer, filename),
+  translateText: (text: string): Promise<string> => ipcRenderer.invoke('translate-text', text)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

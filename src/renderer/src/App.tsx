@@ -9,6 +9,7 @@ function App(): JSX.Element {
   const [audioChunks, setAudioChunks] = useState<Blob[]>([])
   const [audioFileArrayBuffer, setAudioFileArrayBuffer] = useState<Uint8Array>()
   const [transcription, setTranscription] = useState<string>('')
+  const [translatedText, setTranslatedText] = useState<string>('')
 
   const handleAudioFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -104,6 +105,15 @@ function App(): JSX.Element {
     setTranscription(transcribedAudio)
   }
 
+  const handleTranslatingText = async (): Promise<void> => {
+    if (!transcription) {
+      return
+    }
+
+    const result = await window.api.translateText(transcription)
+    setTranslatedText(result)
+  }
+
   return (
     <>
       <label htmlFor="voice-upload">Upload Voice File</label>
@@ -130,7 +140,8 @@ function App(): JSX.Element {
           <div>
             <button onClick={transcribeAudioInArrayBuffer}>Transcribe</button>
             <p>{transcription}</p>
-            <button>Translate</button>
+            <button onClick={handleTranslatingText}>Translate</button>
+            <p>{translatedText}</p>
           </div>
         </div>
       )}
