@@ -1,10 +1,10 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
-import path, { join } from 'path'
-import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import icon from '../../resources/icon.png?asset'
+import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import { AssemblyAI } from 'assemblyai'
-import fs from 'fs'
 import dotenv from 'dotenv'
+import { app, BrowserWindow, ipcMain, shell } from 'electron'
+import fs from 'fs'
+import path, { join } from 'path'
+import icon from '../../resources/icon.png?asset'
 
 dotenv.config()
 
@@ -58,18 +58,6 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  // on File Upload, send it to AssemblyAI
-  ipcMain.on('voiceFileUpload', async (_, byteArray: Uint8Array): Promise<void> => {
-    try {
-      const transcript = await client.transcripts.transcribe({
-        audio: byteArray
-      })
-      console.log(transcript.text)
-    } catch (e) {
-      console.log(e)
-    }
-  })
-
   createWindow()
 
   app.on('activate', function () {
@@ -90,9 +78,21 @@ app.on('window-all-closed', () => {
 
 // In this file you can include the rest of your app"s specific main process
 // code. You can also put them in separate files and require them here.
+
+// on File Upload, send it to AssemblyAI
+ipcMain.on('voiceFileUpload', async (_, byteArray: Uint8Array): Promise<void> => {
+  try {
+    const transcript = await client.transcripts.transcribe({
+      audio: byteArray
+    })
+    console.log(transcript.text)
+  } catch (e) {
+    console.log(e)
+  }
+})
+
 // Listen for the 'save-audio' event
-ipcMain.on('save-audio', (event, wavBuffer: Uint8Array, filename: string) => {
-  console.log('Received audio data:', wavBuffer)
+ipcMain.on('save-audio', (_, wavBuffer: Uint8Array, filename: string) => {
   const appDirectory = app.getAppPath() // Get the current app directory
   const filePath = path.join(appDirectory, filename) // Specify the file path
 
@@ -100,7 +100,7 @@ ipcMain.on('save-audio', (event, wavBuffer: Uint8Array, filename: string) => {
     if (err) {
       console.error('Failed to save audio file:', err)
     } else {
-      console.log('Audio saved to', filePath)
+      console.log('Audio saved to:', filePath)
     }
   })
 })
