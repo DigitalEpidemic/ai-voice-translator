@@ -5,7 +5,9 @@ import { electronAPI } from '@electron-toolkit/preload'
 const api = {
   voiceFileUpload: (byteArray: Uint8Array): void => {
     ipcRenderer.send('voiceFileUpload', byteArray)
-  }
+  },
+  saveAudio: (audioBuffer: Buffer, filename: string): void =>
+    ipcRenderer.send('save-audio', audioBuffer, filename)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

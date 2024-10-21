@@ -1,8 +1,9 @@
 import { app, shell, BrowserWindow, ipcMain } from 'electron'
-import { join } from 'path'
+import path, { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { AssemblyAI } from 'assemblyai'
+import fs from 'fs'
 
 const client = new AssemblyAI({
   apiKey: '' // TODO: Use environment variable
@@ -86,3 +87,17 @@ app.on('window-all-closed', () => {
 
 // In this file you can include the rest of your app"s specific main process
 // code. You can also put them in separate files and require them here.
+// Listen for the 'save-audio' event
+ipcMain.on('save-audio', (event, wavBuffer: Uint8Array, filename: string) => {
+  console.log('Received audio data:', wavBuffer)
+  const appDirectory = app.getAppPath() // Get the current app directory
+  const filePath = path.join(appDirectory, filename) // Specify the file path
+
+  fs.writeFile(filePath, wavBuffer, (err) => {
+    if (err) {
+      console.error('Failed to save audio file:', err)
+    } else {
+      console.log('Audio saved to', filePath)
+    }
+  })
+})
