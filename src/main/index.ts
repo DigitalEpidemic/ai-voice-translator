@@ -4,9 +4,12 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { AssemblyAI } from 'assemblyai'
 import fs from 'fs'
+import dotenv from 'dotenv'
+
+dotenv.config()
 
 const client = new AssemblyAI({
-  apiKey: '' // TODO: Use environment variable
+  apiKey: process.env.VITE_ASSEMBLYAI_API_KEY as string
 })
 
 function createWindow(): void {
