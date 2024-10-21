@@ -80,15 +80,17 @@ app.on('window-all-closed', () => {
 // code. You can also put them in separate files and require them here.
 
 // on File Upload, send it to AssemblyAI
-ipcMain.on('transcribe-audio', async (_, byteArray: Uint8Array): Promise<void> => {
+ipcMain.handle('transcribe-audio', async (_, byteArray: Uint8Array): Promise<string> => {
   console.log('Transcribing audio...')
   try {
     const transcript = await client.transcripts.transcribe({
       audio: byteArray
     })
     console.log(transcript.text)
+    return transcript.text ?? ''
   } catch (e) {
     console.log(e)
+    return 'Error transcribing audio'
   }
 })
 

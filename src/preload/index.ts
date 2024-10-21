@@ -3,8 +3,8 @@ import { electronAPI } from '@electron-toolkit/preload'
 
 // Custom APIs for renderer
 const api = {
-  transcribeAudio: (byteArray: Uint8Array): void => {
-    ipcRenderer.send('transcribe-audio', byteArray)
+  transcribeAudio: (byteArray: Uint8Array): Promise<string> => {
+    return ipcRenderer.invoke('transcribe-audio', byteArray)
   },
   saveAudio: (audioBuffer: Buffer, filename: string): void =>
     ipcRenderer.send('save-audio', audioBuffer, filename)

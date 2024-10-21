@@ -8,6 +8,7 @@ function App(): JSX.Element {
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder>()
   const [audioChunks, setAudioChunks] = useState<Blob[]>([])
   const [audioFileArrayBuffer, setAudioFileArrayBuffer] = useState<Uint8Array>()
+  const [transcription, setTranscription] = useState<string>('')
 
   const handleAudioFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -99,7 +100,8 @@ function App(): JSX.Element {
       return
     }
 
-    await window.api.transcribeAudio(audioFileArrayBuffer) // TODO: Change to two-way communication and return transcribed text
+    const transcribedAudio = await window.api.transcribeAudio(audioFileArrayBuffer)
+    setTranscription(transcribedAudio)
   }
 
   return (
@@ -127,6 +129,7 @@ function App(): JSX.Element {
           </audio>
           <div>
             <button onClick={transcribeAudioInArrayBuffer}>Transcribe</button>
+            <p>{transcription}</p>
             <button>Translate</button>
           </div>
         </div>
