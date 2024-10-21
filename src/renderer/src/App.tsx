@@ -6,8 +6,7 @@ function App(): JSX.Element {
   const [isStartButtonDisabled, setStartButtonDisabled] = useState(false)
   const [isStopButtonDisabled, setStopButtonDisabled] = useState(true)
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder>()
-
-  const audioChunks: Blob[] = []
+  const [audioChunks, setAudioChunks] = useState<Blob[]>([])
 
   const sendFileToService = async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
     if (!event.target.files) {
@@ -25,6 +24,10 @@ function App(): JSX.Element {
   }
 
   const handleStartRecording = async (): Promise<void> => {
+    if (audioUrl) {
+      setAudioUrl(null)
+    }
+
     try {
       // This should return a valid MediaStream object
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -49,6 +52,7 @@ function App(): JSX.Element {
         // Play the audio locally
         const audioUrl = URL.createObjectURL(audioBlob)
         setAudioUrl(audioUrl)
+        setAudioChunks([])
       }
 
       mr.start()
