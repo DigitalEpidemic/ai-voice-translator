@@ -1,7 +1,17 @@
 import { useState } from 'react'
+// import translate from 'translate'
+
+// const doTheTranslation = async (text: string, language: string): Promise<string> => {
+//   translate.engine = 'google'
+
+//   return translate(text, language)
+// }
 
 function App(): JSX.Element {
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
+  const [audioTranscript, setAudioTranscript] = useState<string | null>(null)
+  const [translation, setTranslation] = useState<string | null>(null)
+  const [language, setLanguage] = useState<string>('ja')
 
   const sendFileToService = async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
     if (!event.target.files) {
@@ -15,8 +25,12 @@ function App(): JSX.Element {
     const blobUrl = URL.createObjectURL(fileBlob)
     setAudioUrl(blobUrl)
 
-    const response = await window.api.voiceFileUpload(byteArray)
-    console.log(response)
+    const transcription = await window.api.voiceFileUpload(byteArray)
+    setAudioTranscript(transcription)
+
+    // TODO: Move translation into main index.tsx (Create event, etc.)
+    // setTranslation(await doTheTranslation(transcription, language))
+    console.log(transcription)
   }
 
   return (
@@ -32,6 +46,9 @@ function App(): JSX.Element {
           </audio>
         </div>
       )}
+
+      {audioTranscript && <p>Original: {audioTranscript}</p>}
+      {translation && <p>Translation: {translation}</p>}
     </>
   )
 }
