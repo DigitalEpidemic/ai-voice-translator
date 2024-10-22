@@ -3,9 +3,12 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { AssemblyAI } from 'assemblyai'
+import dotenv from 'dotenv'
+
+dotenv.config()
 
 const client = new AssemblyAI({
-  apiKey: '' // TODO: Use environment variable
+  apiKey: process.env.ASSEMBLY_AI_TOKEN ?? '' // TODO: Use environment variable
 })
 
 function createWindow(): void {
