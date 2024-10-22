@@ -15,7 +15,8 @@ function App(): JSX.Element {
     const blobUrl = URL.createObjectURL(fileBlob)
     setAudioUrl(blobUrl)
 
-    await window.api.voiceFileUpload(byteArray) // TODO: Change to two-way communication and return transcribed text
+    const response = await window.api.voiceFileUpload(byteArray)
+    console.log(response)
   }
 
   return (

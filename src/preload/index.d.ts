@@ -4,7 +4,7 @@ declare global {
   interface Window {
     electron: ElectronAPI
     api: {
-      voiceFileUpload: (byteArray: Uint8Array) => Promise<void>
+      voiceFileUpload: (byteArray: Uint8Array) => Promise<string>
     }
   }
 }

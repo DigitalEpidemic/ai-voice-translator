@@ -58,14 +58,18 @@ app.whenReady().then(() => {
   })
 
   // on File Upload, send it to AssemblyAI
-  ipcMain.on('voiceFileUpload', async (_, byteArray: Uint8Array): Promise<void> => {
+  ipcMain.handle('voiceFileUpload', async (_, byteArray: Uint8Array): Promise<string> => {
+    console.log('Transcribing...')
+
     try {
       const transcript = await client.transcripts.transcribe({
         audio: byteArray
       })
-      console.log(transcript.text)
-    } catch (e) {
+      return transcript.text ?? ''
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (e: any) {
       console.log(e)
+      return e.message as unknown as string
     }
   })
 

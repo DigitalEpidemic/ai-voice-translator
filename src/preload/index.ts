@@ -3,9 +3,8 @@ import { electronAPI } from '@electron-toolkit/preload'
 
 // Custom APIs for renderer
 const api = {
-  voiceFileUpload: (byteArray: Uint8Array): void => {
-    ipcRenderer.send('voiceFileUpload', byteArray)
-  }
+  voiceFileUpload: (byteArray: Uint8Array): Promise<string> =>
+    ipcRenderer.invoke('voiceFileUpload', byteArray)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to
