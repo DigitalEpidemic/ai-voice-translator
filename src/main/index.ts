@@ -1,5 +1,5 @@
+import { createClient } from '@deepgram/sdk'
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
-import { AssemblyAI } from 'assemblyai'
 import dotenv from 'dotenv'
 import { app, BrowserWindow, ipcMain, shell } from 'electron'
 import { ElevenLabsClient } from 'elevenlabs'
@@ -12,9 +12,7 @@ import icon from '../../resources/icon.png?asset'
 
 dotenv.config()
 
-const assemblyAIClient = new AssemblyAI({
-  apiKey: process.env.VITE_ASSEMBLYAI_API_KEY as string
-})
+const deepgramClient = createClient(process.env.VITE_DEEPGRAM_API_KEY)
 
 const elevenLabsClient = new ElevenLabsClient({
   apiKey: process.env.VITE_ELEVENLABS_API_KEY as string
@@ -88,18 +86,30 @@ app.on('window-all-closed', () => {
 // code. You can also put them in separate files and require them here.
 
 // on File Upload, send it to AssemblyAI
-ipcMain.handle('transcribe-audio', async (_, byteArray: Uint8Array): Promise<string> => {
+ipcMain.handle('transcribe-audio', async (_, uint8Array: Uint8Array): Promise<string> => {
   console.log('Transcribing audio...')
+
   try {
-    const transcript = await assemblyAIClient.transcripts.transcribe({
-      audio: byteArray
+    const audioBuffer = Buffer.from(uint8Array)
+
+    const response = await deepgramClient.listen.prerecorded.transcribeFile(audioBuffer, {
+      punctuate: true,
+      language: 'en-US'
     })
-    console.log(` ${transcript.text}`)
-    return transcript.text ?? ''
-  } catch (e) {
-    console.log(e)
-    return 'Error transcribing audio'
+
+    // Check if response has results
+    if (response.result && response.result.results.channels.length > 0) {
+      // Access the transcription text
+      const transcription = response.result.results.channels[0].alternatives[0]?.transcript
+      console.log('Transcription:', transcription)
+      return transcription
+    } else {
+      console.error('No transcription available in response:', response)
+    }
+  } catch (error) {
+    console.error('Error transcribing audio:', error)
   }
+  return ''
 })
 
 // Listen for the 'save-audio' event

@@ -21,9 +21,9 @@
     "build:linux": "electron-vite build && electron-builder --linux"
   },
   "dependencies": {
+    "@deepgram/sdk": "^3.8.1",
     "@electron-toolkit/preload": "^3.0.1",
     "@electron-toolkit/utils": "^3.0.0",
-    "assemblyai": "^4.7.1",
     "dotenv": "^16.4.5",
     "elevenlabs": "^0.17.1",
     "translate": "1",
