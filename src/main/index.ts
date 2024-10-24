@@ -9,6 +9,7 @@ import { Readable } from 'stream'
 import translate from 'translate'
 import { v4 as uuid } from 'uuid'
 import icon from '../../resources/icon.png?asset'
+import ffmpeg from 'fluent-ffmpeg'
 
 dotenv.config()
 
@@ -94,7 +95,8 @@ ipcMain.handle('transcribe-audio', async (_, uint8Array: Uint8Array): Promise<st
 
     const response = await deepgramClient.listen.prerecorded.transcribeFile(audioBuffer, {
       punctuate: true,
-      language: 'en-US'
+      language: 'en-US',
+      model: 'nova-2'
     })
 
     // Check if response has results
@@ -150,23 +152,39 @@ ipcMain.handle('text-to-speech', async (_, text: string): Promise<Uint8Array> =>
       text
     })
 
-    // Convert the audio stream to a Node readable stream
     const readableStream = Readable.from(audioStream)
     const buffer = await streamToBuffer(readableStream)
     const intArray = new Uint8Array(buffer)
 
-    const fileName = `${uuid()}.mp3`
-    const appDirectory = app.getAppPath() // Get the current app directory
-    const filePath = path.join(appDirectory, fileName) // Specify the file path
+    const generatedFileName = uuid()
+    const tempFileName = `${generatedFileName}.mp3`
+    const appDirectory = app.getAppPath()
+    const tempFilePath = path.join(appDirectory, tempFileName)
 
-    fs.writeFile(filePath, buffer, (err) => {
+    fs.writeFileSync(tempFilePath, buffer)
+
+    const wavFileName = `${generatedFileName}.wav`
+    const wavFilePath = path.join(appDirectory, wavFileName)
+
+    await new Promise<void>((resolve, reject) => {
+      ffmpeg(tempFilePath)
+        .toFormat('wav')
+        .on('end', () => {
+          resolve()
+        })
+        .on('error', (err) => {
+          reject(err)
+        })
+        .save(wavFilePath)
+    })
+
+    fs.unlink(tempFilePath, (err) => {
       if (err) {
-        console.error('Failed to save audio file:', err)
-      } else {
-        console.log('Audio saved to:', filePath)
+        console.error('Failed to delete temp MP3 file:', err)
       }
     })
 
+    console.log('Audio saved as WAV:', wavFilePath)
     return intArray
   } catch (error) {
     console.error('Error generating audio:', error)
