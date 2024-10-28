@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import WavEncoder from 'wav-encoder'
 
-function App(): JSX.Element {
+const App = (): React.ReactElement => {
   const [originalAudioUrl, setOriginalAudioUrl] = useState<string | null>(null)
   const [translatedAudioUrl, setTranslatedAudioUrl] = useState<string | null>(null)
   const [isStartButtonDisabled, setStartButtonDisabled] = useState(false)
