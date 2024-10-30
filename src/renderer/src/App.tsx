@@ -1,3 +1,4 @@
+import { languages } from '@/types/languageTypes'
 import { useState } from 'react'
 
 function App(): JSX.Element {
@@ -31,11 +32,23 @@ function App(): JSX.Element {
     console.log(transcription)
   }
 
+  const handleLanguageChange = (event: React.ChangeEvent<HTMLSelectElement>): void => {
+    console.log(event.target.value)
+    setLanguage(event.target.value)
+  }
+
   return (
     <>
       <label htmlFor="voice-upload">Upload Voice File</label>
       <input id="voice-upload" type="file" accept="audio/*" onChange={sendFileToService} />
 
+      <select onChange={handleLanguageChange}>
+        {languages.map((lang) => (
+          <option key={lang.code} value={lang.code}>
+            {lang.name}
+          </option>
+        ))}
+      </select>
       {audioUrl && (
         <div>
           <audio controls>

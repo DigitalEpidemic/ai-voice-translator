@@ -1,4 +1,5 @@
 import { ElectronAPI } from '@electron-toolkit/preload'
+import { AvailableLanguages, languages } from '../types/languageTypes'
 
 declare global {
   interface Window {
