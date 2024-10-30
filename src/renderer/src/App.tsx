@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import WavEncoder from 'wav-encoder'
+import { AvailableLanguages, languages } from '@/types/languageTypes'
 
 const App = (): React.ReactElement => {
   const [originalAudioUrl, setOriginalAudioUrl] = useState<string | null>(null)
@@ -11,6 +12,7 @@ const App = (): React.ReactElement => {
   const [audioFileArrayBuffer, setAudioFileArrayBuffer] = useState<Uint8Array>()
   const [transcription, setTranscription] = useState<string>('')
   const [translatedText, setTranslatedText] = useState<string>('')
+  const [outputLanguage, setOutputLanguage] = useState<AvailableLanguages>(languages[0].code)
 
   const handleAudioFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -111,7 +113,7 @@ const App = (): React.ReactElement => {
       return
     }
 
-    const result = await window.api.translateText(transcription)
+    const result = await window.api.translateText(transcription, outputLanguage)
     setTranslatedText(result)
   }
 
@@ -124,6 +126,11 @@ const App = (): React.ReactElement => {
     const blob = new Blob([arrayBuffer], { type: 'audio/mpeg' })
     const url = URL.createObjectURL(blob)
     setTranslatedAudioUrl(url)
+  }
+
+  const handleOnLanguageChange = (event: React.ChangeEvent<HTMLSelectElement>): void => {
+    console.log('Setting output language to:', event.target.value)
+    setOutputLanguage(event.target.value as AvailableLanguages)
   }
 
   return (
@@ -153,6 +160,18 @@ const App = (): React.ReactElement => {
             <button onClick={transcribeAudioInArrayBuffer}>Transcribe</button>
             <p>{transcription}</p>
             <button onClick={handleTranslatingText}>Translate</button>
+            <select
+              name="languages"
+              id="languages"
+              onChange={handleOnLanguageChange}
+              value={outputLanguage}
+            >
+              {languages.map((language) => (
+                <option key={language.code} value={language.code}>
+                  {language.name}
+                </option>
+              ))}
+            </select>
             <p>{translatedText}</p>
           </div>
 

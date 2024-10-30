@@ -10,6 +10,7 @@ import translate from 'translate'
 import { v4 as uuid } from 'uuid'
 import icon from '../../resources/icon.png?asset'
 import ffmpeg from 'fluent-ffmpeg'
+import { AvailableLanguages, languages } from '@/types/languageTypes'
 
 dotenv.config()
 
@@ -115,19 +116,23 @@ ipcMain.on('save-audio', (_, wavBuffer: Uint8Array, filename: string) => {
   saveAudioBufferToFilePath(filePath, wavBuffer)
 })
 
-ipcMain.handle('translate-text', async (_, text: string): Promise<string> => {
-  console.log('Translating text...')
-  translate.engine = 'google'
+ipcMain.handle(
+  'translate-text',
+  async (_, text: string, targetLanguage: AvailableLanguages): Promise<string> => {
+    const fullLanguageName = languages.find((language) => language.code === targetLanguage)?.name
+    console.log(`Translating text into ${fullLanguageName}...`)
+    translate.engine = 'google'
 
-  try {
-    const result = await translate(text, { to: 'tl' }) // TODO: Option for multiple languages
-    console.log(` ${result}`)
-    return result
-  } catch (e) {
-    console.log(e)
-    return 'Error translating text'
+    try {
+      const result = await translate(text, { to: targetLanguage })
+      console.log(` ${result}`)
+      return result
+    } catch (e) {
+      console.log(e)
+      return 'Error translating text'
+    }
   }
-})
+)
 
 ipcMain.handle('text-to-speech', async (_, text: string): Promise<Uint8Array> => {
   console.log('Generating audio...')
