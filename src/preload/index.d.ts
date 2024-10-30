@@ -5,6 +5,7 @@ declare global {
     electron: ElectronAPI
     api: {
       voiceFileUpload: (byteArray: Uint8Array) => Promise<string>
+      translateTranscription: (text: string, language: string) => Promise<string>
     }
   }
 }

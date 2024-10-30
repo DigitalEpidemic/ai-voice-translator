@@ -4,7 +4,9 @@ import { electronAPI } from '@electron-toolkit/preload'
 // Custom APIs for renderer
 const api = {
   voiceFileUpload: (byteArray: Uint8Array): Promise<string> =>
-    ipcRenderer.invoke('voiceFileUpload', byteArray)
+    ipcRenderer.invoke('voiceFileUpload', byteArray),
+  translateTranscription: (text: string, language: string): Promise<string> =>
+    ipcRenderer.invoke('translateTranscription', text, language)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

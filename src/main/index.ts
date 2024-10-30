@@ -3,6 +3,7 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { AssemblyAI } from 'assemblyai'
+import translate from 'translate'
 import dotenv from 'dotenv'
 
 dotenv.config()
@@ -72,6 +73,13 @@ app.whenReady().then(() => {
       return e.message as unknown as string
     }
   })
+
+  ipcMain.handle('translateTranscription', async (_, text: string, language: string): Promise<string> => {
+      translate.engine = 'google'
+
+      return translate(text, language)
+    }
+  )
 
   createWindow()
 

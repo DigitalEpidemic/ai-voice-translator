@@ -1,11 +1,4 @@
 import { useState } from 'react'
-// import translate from 'translate'
-
-// const doTheTranslation = async (text: string, language: string): Promise<string> => {
-//   translate.engine = 'google'
-
-//   return translate(text, language)
-// }
 
 function App(): JSX.Element {
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
@@ -27,6 +20,8 @@ function App(): JSX.Element {
 
     const transcription = await window.api.voiceFileUpload(byteArray)
     setAudioTranscript(transcription)
+
+    setTranslation(await window.api.translateTranscription(transcription, language))
 
     // TODO: Move translation into main index.tsx (Create event, etc.)
     // setTranslation(await doTheTranslation(transcription, language))
