@@ -21,7 +21,10 @@ function App(): JSX.Element {
     const transcription = await window.api.voiceFileUpload(byteArray)
     setAudioTranscript(transcription)
 
-    setTranslation(await window.api.translateTranscription(transcription, language))
+    const taco = await window.api.translateTranscription(transcription, language)
+    setTranslation(taco)
+
+    await window.api.textToSpeech(taco)
 
     // TODO: Move translation into main index.tsx (Create event, etc.)
     // setTranslation(await doTheTranslation(transcription, language))

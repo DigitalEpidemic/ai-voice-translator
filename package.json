@@ -25,6 +25,7 @@
     "@electron-toolkit/utils": "^3.0.0",
     "assemblyai": "^4.7.1",
     "dotenv": "^16.4.5",
+    "elevenlabs": "^0.18.0",
     "translate": "1"
   },
   "devDependencies": {

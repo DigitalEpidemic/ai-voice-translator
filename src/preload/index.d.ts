@@ -6,6 +6,7 @@ declare global {
     api: {
       voiceFileUpload: (byteArray: Uint8Array) => Promise<string>
       translateTranscription: (text: string, language: string) => Promise<string>
+      textToSpeech: (text: string) => Promise<void>
     }
   }
 }

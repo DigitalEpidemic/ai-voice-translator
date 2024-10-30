@@ -5,11 +5,17 @@ import icon from '../../resources/icon.png?asset'
 import { AssemblyAI } from 'assemblyai'
 import translate from 'translate'
 import dotenv from 'dotenv'
+import { ElevenLabsClient } from 'elevenlabs'
+import { createWriteStream } from 'fs'
 
 dotenv.config()
 
 const client = new AssemblyAI({
-  apiKey: process.env.ASSEMBLY_AI_TOKEN ?? '' // TODO: Use environment variable
+  apiKey: process.env.ASSEMBLY_AI_TOKEN ?? ''
+})
+
+const elevenLabsClient = new ElevenLabsClient({
+  apiKey: process.env.ELEVENLABS_API_KEY ?? ''
 })
 
 function createWindow(): void {
@@ -58,29 +64,6 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  // on File Upload, send it to AssemblyAI
-  ipcMain.handle('voiceFileUpload', async (_, byteArray: Uint8Array): Promise<string> => {
-    console.log('Transcribing...')
-
-    try {
-      const transcript = await client.transcripts.transcribe({
-        audio: byteArray
-      })
-      return transcript.text ?? ''
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (e: any) {
-      console.log(e)
-      return e.message as unknown as string
-    }
-  })
-
-  ipcMain.handle('translateTranscription', async (_, text: string, language: string): Promise<string> => {
-      translate.engine = 'google'
-
-      return translate(text, language)
-    }
-  )
-
   createWindow()
 
   app.on('activate', function () {
@@ -101,3 +84,48 @@ app.on('window-all-closed', () => {
 
 // In this file you can include the rest of your app"s specific main process
 // code. You can also put them in separate files and require them here.
+
+// on File Upload, send it to AssemblyAI
+ipcMain.handle('voiceFileUpload', async (_, byteArray: Uint8Array): Promise<string> => {
+  console.log('Transcribing...')
+
+  try {
+    const transcript = await client.transcripts.transcribe({
+      audio: byteArray
+    })
+    return transcript.text ?? ''
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (e: any) {
+    console.log(e)
+    return e.message as unknown as string
+  }
+})
+
+ipcMain.handle(
+  'translateTranscription',
+  async (_, text: string, language: string): Promise<string> => {
+    translate.engine = 'google'
+
+    return translate(text, language)
+  }
+)
+
+ipcMain.handle('textToSpeech', async (_, text: string): Promise<void> => {
+  try {
+    const audio = await elevenLabsClient.generate({
+      voice: 'Rachel',
+      model_id: 'eleven_turbo_v2_5',
+      text
+    })
+
+    const fileName = `${app.getAppPath()}/geralt_of_rivia.mp3`
+    console.log({fileName})
+    const fileStream = createWriteStream(fileName)
+
+    audio.pipe(fileStream)
+    fileStream.on('finish', () => console.log('We done!'))
+    fileStream.on('error', () => console.error('oopsie-doodle'))
+  } catch (error) {
+    console.error('oopsie-doodle')
+  }
+})
