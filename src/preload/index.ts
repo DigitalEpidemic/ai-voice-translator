@@ -6,8 +6,7 @@ import { AvailableLanguageCodes, AvailableLanguages } from '@/types/languageType
 const api = {
   transcribeAudio: (byteArray: Uint8Array): Promise<string> =>
     ipcRenderer.invoke('transcribe-audio', byteArray),
-  saveAudio: (audioBuffer: Buffer, filename: string): void =>
-    ipcRenderer.send('save-audio', audioBuffer, filename),
+  saveAudio: (audioBuffer: Buffer): void => ipcRenderer.send('save-audio', audioBuffer),
   translateText: (text: string, targetLanguage: AvailableLanguageCodes): Promise<string> =>
     ipcRenderer.invoke('translate-text', text, targetLanguage),
   textToSpeech: (text: string, language: AvailableLanguages): Promise<Uint8Array> =>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import WavEncoder from 'wav-encoder'
-import { AvailableLanguageCodes, AvailableLanguages, languages } from '@/types/languageTypes'
+import { AvailableLanguageCodes, languages } from '@/types/languageTypes'
 
 const App = (): React.ReactElement => {
   const [originalAudioUrl, setOriginalAudioUrl] = useState<string | null>(null)
@@ -57,7 +57,7 @@ const App = (): React.ReactElement => {
         const wavBuffer = await convertWebMToWav(audioBlob)
         setAudioFileArrayBuffer(wavBuffer)
         // Send the audio data to the main process to save the file
-        window.api.saveAudio(wavBuffer, 'recording.wav')
+        window.api.saveAudio(wavBuffer)
 
         // Play the audio locally
         const audioUrl = URL.createObjectURL(audioBlob)

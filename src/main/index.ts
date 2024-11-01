@@ -109,7 +109,8 @@ ipcMain.handle('transcribe-audio', async (_, uint8Array: Uint8Array): Promise<st
   return ''
 })
 
-ipcMain.on('save-audio', (_, wavBuffer: Uint8Array, filename: string) => {
+ipcMain.on('save-audio', (_, wavBuffer: Uint8Array) => {
+  const filename = `recording-${uuid()}.wav`
   const appDirectory = app.getAppPath() // Get the current app directory
   const filePath = path.join(appDirectory, filename) // Specify the file path
 

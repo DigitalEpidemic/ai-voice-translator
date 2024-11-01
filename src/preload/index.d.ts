@@ -6,7 +6,7 @@ declare global {
     electron: ElectronAPI
     api: {
       transcribeAudio: (byteArray: Uint8Array) => Promise<string>
-      saveAudio: (audioBuffer: Uint8Array, filename: string) => void
+      saveAudio: (audioBuffer: Uint8Array) => void
       translateText: (text: string, targetLanguage: AvailableLanguageCodes) => Promise<string>
       textToSpeech: (text: string, language: AvailableLanguages) => Promise<Uint8Array>
     }
