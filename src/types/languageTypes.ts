@@ -33,4 +33,5 @@ export const languages = [
   { name: 'Norwegian', code: 'no' }
 ] as const
 
-export type AvailableLanguages = (typeof languages)[number]['code']
+export type AvailableLanguageCodes = (typeof languages)[number]['code']
+export type AvailableLanguages = (typeof languages)[number]['name']

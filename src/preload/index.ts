@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
-import { AvailableLanguages } from '@/types/languageTypes'
+import { AvailableLanguageCodes, AvailableLanguages } from '@/types/languageTypes'
 
 // Custom APIs for renderer
 const api = {
@@ -8,9 +8,10 @@ const api = {
     ipcRenderer.invoke('transcribe-audio', byteArray),
   saveAudio: (audioBuffer: Buffer, filename: string): void =>
     ipcRenderer.send('save-audio', audioBuffer, filename),
-  translateText: (text: string, targetLanguage: AvailableLanguages): Promise<string> =>
+  translateText: (text: string, targetLanguage: AvailableLanguageCodes): Promise<string> =>
     ipcRenderer.invoke('translate-text', text, targetLanguage),
-  textToSpeech: (text: string): Promise<Uint8Array> => ipcRenderer.invoke('text-to-speech', text)
+  textToSpeech: (text: string, language: AvailableLanguages): Promise<Uint8Array> =>
+    ipcRenderer.invoke('text-to-speech', text, language)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

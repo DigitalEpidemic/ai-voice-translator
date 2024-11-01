@@ -10,7 +10,7 @@ import translate from 'translate'
 import { v4 as uuid } from 'uuid'
 import icon from '../../resources/icon.png?asset'
 import ffmpeg from 'fluent-ffmpeg'
-import { AvailableLanguages, languages } from '@/types/languageTypes'
+import { AvailableLanguageCodes, AvailableLanguages, languages } from '@/types/languageTypes'
 
 dotenv.config()
 
@@ -118,7 +118,7 @@ ipcMain.on('save-audio', (_, wavBuffer: Uint8Array, filename: string) => {
 
 ipcMain.handle(
   'translate-text',
-  async (_, text: string, targetLanguage: AvailableLanguages): Promise<string> => {
+  async (_, text: string, targetLanguage: AvailableLanguageCodes): Promise<string> => {
     const fullLanguageName = languages.find((language) => language.code === targetLanguage)?.name
     console.log(`Translating text into ${fullLanguageName}...`)
     translate.engine = 'google'
@@ -134,37 +134,43 @@ ipcMain.handle(
   }
 )
 
-ipcMain.handle('text-to-speech', async (_, text: string): Promise<Uint8Array> => {
-  console.log('Generating audio...')
+ipcMain.handle(
+  'text-to-speech',
+  async (_, text: string, language: AvailableLanguages): Promise<Uint8Array> => {
+    console.log('Generating audio...')
 
-  try {
-    const audioStream = await elevenLabsClient.generate({
-      voice: 'LHEmo0XNW9f1ptZLyVTV', // My voice ID
-      model_id: 'eleven_turbo_v2_5',
-      text
-    })
+    try {
+      const audioStream = await elevenLabsClient.generate({
+        voice: 'LHEmo0XNW9f1ptZLyVTV', // My voice ID
+        model_id: 'eleven_turbo_v2_5',
+        text
+      })
 
-    const generatedFileName = uuid()
-    const appDirectory = app.getAppPath()
+      const generatedFileName = uuid()
+      const appDirectory = app.getAppPath()
 
-    const tempMp3FilePath = path.join(appDirectory, `${generatedFileName}.mp3`)
-    const audioData = await saveAudioStreamToMp3FileAndReturnAudioData(audioStream, tempMp3FilePath)
+      const tempMp3FilePath = path.join(appDirectory, `${language}-${generatedFileName}.mp3`)
+      const audioData = await saveAudioStreamToMp3FileAndReturnAudioData(
+        audioStream,
+        tempMp3FilePath
+      )
 
-    const wavFilePath = path.join(appDirectory, `${generatedFileName}.wav`)
-    await convertMp3ToWav(tempMp3FilePath, wavFilePath)
+      const wavFilePath = path.join(appDirectory, `${language}-${generatedFileName}.wav`)
+      await convertMp3ToWav(tempMp3FilePath, wavFilePath)
 
-    fs.unlink(tempMp3FilePath, (err) => {
-      if (err) {
-        console.error('Failed to delete temp MP3 file:', err)
-      }
-    })
+      fs.unlink(tempMp3FilePath, (err) => {
+        if (err) {
+          console.error('Failed to delete temp MP3 file:', err)
+        }
+      })
 
-    return audioData
-  } catch (error) {
-    console.error('Error generating audio:', error)
-    throw new Error('Audio generation failed')
+      return audioData
+    } catch (error) {
+      console.error('Error generating audio:', error)
+      throw new Error('Audio generation failed')
+    }
   }
-})
+)
 
 const streamToBuffer = (stream: Readable): Promise<Buffer> => {
   return new Promise((resolve, reject) => {

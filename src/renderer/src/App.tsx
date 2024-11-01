@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import WavEncoder from 'wav-encoder'
-import { AvailableLanguages, languages } from '@/types/languageTypes'
+import { AvailableLanguageCodes, AvailableLanguages, languages } from '@/types/languageTypes'
 
 const App = (): React.ReactElement => {
   const [originalAudioUrl, setOriginalAudioUrl] = useState<string | null>(null)
@@ -12,7 +12,7 @@ const App = (): React.ReactElement => {
   const [audioFileArrayBuffer, setAudioFileArrayBuffer] = useState<Uint8Array>()
   const [transcription, setTranscription] = useState<string>('')
   const [translatedText, setTranslatedText] = useState<string>('')
-  const [outputLanguage, setOutputLanguage] = useState<AvailableLanguages>(languages[0].code)
+  const [outputLanguage, setOutputLanguage] = useState<AvailableLanguageCodes>(languages[0].code)
 
   const handleAudioFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -118,11 +118,12 @@ const App = (): React.ReactElement => {
   }
 
   const handleTextToSpeech = async (): Promise<void> => {
-    if (!translatedText) {
+    const currentLanguage = languages.find((language) => language.code === outputLanguage)
+    if (!translatedText || !currentLanguage) {
       return
     }
 
-    const arrayBuffer = await window.api.textToSpeech(translatedText)
+    const arrayBuffer = await window.api.textToSpeech(translatedText, currentLanguage.name)
     const blob = new Blob([arrayBuffer], { type: 'audio/mpeg' })
     const url = URL.createObjectURL(blob)
     setTranslatedAudioUrl(url)
@@ -130,7 +131,7 @@ const App = (): React.ReactElement => {
 
   const handleOnLanguageChange = (event: React.ChangeEvent<HTMLSelectElement>): void => {
     console.log('Setting output language to:', event.target.value)
-    setOutputLanguage(event.target.value as AvailableLanguages)
+    setOutputLanguage(event.target.value as AvailableLanguageCodes)
   }
 
   return (
