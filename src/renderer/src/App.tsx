@@ -1,6 +1,8 @@
+import { AvailableLanguageCodes, languages } from '@/types/languageTypes'
+import { Button, Heading, HStack, Select, Stack, Text } from '@chakra-ui/react'
 import React, { useState } from 'react'
 import WavEncoder from 'wav-encoder'
-import { AvailableLanguageCodes, languages } from '@/types/languageTypes'
+import { FileUploadButton } from './components/ui/FileUpload'
 
 const App = (): React.ReactElement => {
   const [originalAudioUrl, setOriginalAudioUrl] = useState<string | null>(null)
@@ -135,59 +137,58 @@ const App = (): React.ReactElement => {
   }
 
   return (
-    <>
-      <label htmlFor="voice-upload">Upload Voice File</label>
-      <input id="voice-upload" type="file" accept="audio/*" onChange={handleAudioFileUpload} />
+    <Stack w={'md'}>
+      <Heading size="lg" my={2} textAlign={'center'}>
+        AI Voice Translator
+      </Heading>
+      <Text>Upload Existing Audio File</Text>
+      <FileUploadButton buttonText="Upload File" onChange={handleAudioFileUpload} />
 
-      <p>Or</p>
+      <Text textAlign={'center'}>Or</Text>
 
-      <label htmlFor="voice-upload">Record Microphone</label>
-      <div>
-        <button onClick={handleStartRecording} disabled={isStartButtonDisabled}>
+      <Text>Record Microphone</Text>
+      <HStack>
+        <Button onClick={handleStartRecording} isDisabled={isStartButtonDisabled}>
           Start Recording
-        </button>
-        <button onClick={handleStopRecording} disabled={isStopButtonDisabled}>
+        </Button>
+        <Button onClick={handleStopRecording} isDisabled={isStopButtonDisabled}>
           Stop Recording
-        </button>
-      </div>
+        </Button>
+      </HStack>
 
       {originalAudioUrl && (
-        <div>
+        <Stack>
           <audio controls>
             <source src={originalAudioUrl} type="audio/wav" />
             Your browser does not support the audio element.
           </audio>
-          <div>
-            <button onClick={transcribeAudioInArrayBuffer}>Transcribe</button>
-            <p>{transcription}</p>
-            <button onClick={handleTranslatingText}>Translate</button>
-            <select
-              name="languages"
-              id="languages"
-              onChange={handleOnLanguageChange}
-              value={outputLanguage}
-            >
-              {languages.map((language) => (
-                <option key={language.code} value={language.code}>
-                  {language.name}
-                </option>
-              ))}
-            </select>
-            <p>{translatedText}</p>
-          </div>
+          <Button onClick={transcribeAudioInArrayBuffer}>Transcribe</Button>
+          <Text>{transcription}</Text>
+          <Button onClick={handleTranslatingText}>Translate</Button>
+          <Select
+            name="languages"
+            id="languages"
+            onChange={handleOnLanguageChange}
+            value={outputLanguage}
+          >
+            {languages.map((language) => (
+              <option key={language.code} value={language.code}>
+                {language.name}
+              </option>
+            ))}
+          </Select>
+          <Text>{translatedText}</Text>
 
-          <div>
-            <button onClick={handleTextToSpeech}>Use AI Voice 🤖</button>
-            {translatedAudioUrl && (
-              <audio controls>
-                <source src={translatedAudioUrl} type="audio/mp3" />
-                Your browser does not support the audio element.
-              </audio>
-            )}
-          </div>
-        </div>
+          <Button onClick={handleTextToSpeech}>Use AI Voice 🤖</Button>
+          {translatedAudioUrl && (
+            <audio controls>
+              <source src={translatedAudioUrl} type="audio/mp3" />
+              Your browser does not support the audio element.
+            </audio>
+          )}
+        </Stack>
       )}
-    </>
+    </Stack>
   )
 }
 
