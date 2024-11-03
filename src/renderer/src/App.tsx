@@ -234,30 +234,32 @@ const App = (): React.ReactElement => {
           </>
         )}
 
-        <Flex mb={4}>
-          <Select
-            name="languages"
-            id="languages"
-            onChange={handleOnLanguageChange}
-            value={outputLanguage}
-          >
-            {languages.map((language) => (
-              <option key={language.code} value={language.code}>
-                {language.name}
-              </option>
-            ))}
-          </Select>
-          <Button w={'100%'} onClick={handleTranslatingText}>
-            Translate
-          </Button>
-        </Flex>
-        <Textarea
-          value={translatedText}
-          onChange={(e) => setTranslatedText(e.target.value)}
-          placeholder="Translated text goes here..."
-        />
-
         <Stack mt={4}>
+          <Flex>
+            <Select
+              name="languages"
+              id="languages"
+              onChange={handleOnLanguageChange}
+              value={outputLanguage}
+            >
+              {languages.map((language) => (
+                <option key={language.code} value={language.code}>
+                  {language.name}
+                </option>
+              ))}
+            </Select>
+            <Button w={'100%'} onClick={handleTranslatingText}>
+              Translate
+            </Button>
+          </Flex>
+          <Textarea
+            value={translatedText}
+            onChange={(e) => setTranslatedText(e.target.value)}
+            placeholder="Translated text goes here..."
+          />
+        </Stack>
+
+        <Stack>
           <Button onClick={handleTextToSpeech}>Generate AI Voice 🤖</Button>
           <Text>Translated Audio:</Text>
           <audio controls style={{ width: '100%' }}>
