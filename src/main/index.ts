@@ -23,6 +23,7 @@ const elevenLabsClient = new ElevenLabsClient({
 function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
+    title: 'AI Voice Translator',
     width: 900,
     height: 775,
     show: false,
@@ -41,6 +42,10 @@ function createWindow(): void {
   mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url)
     return { action: 'deny' }
+  })
+
+  mainWindow.on('page-title-updated', function (e) {
+    e.preventDefault()
   })
 
   // HMR for renderer base on electron-vite cli.
