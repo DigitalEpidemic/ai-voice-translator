@@ -12,7 +12,8 @@ import {
   TabPanel,
   TabPanels,
   Tabs,
-  Text
+  Text,
+  Textarea
 } from '@chakra-ui/react'
 import React, { useState } from 'react'
 import WavEncoder from 'wav-encoder'
@@ -30,6 +31,7 @@ const App = (): React.ReactElement => {
   const [translatedText, setTranslatedText] = useState<string>('')
   const [outputLanguage, setOutputLanguage] = useState<AvailableLanguageCodes>(languages[0].code)
   const [tabIndex, setTabIndex] = useState(0)
+  const [userEnteredText, setUserEnteredText] = useState('')
 
   const handleAudioFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -126,11 +128,17 @@ const App = (): React.ReactElement => {
   }
 
   const handleTranslatingText = async (): Promise<void> => {
-    if (!transcription) {
+    if (!transcription && userEnteredText === '') {
       return
     }
 
-    const result = await window.api.translateText(transcription, outputLanguage)
+    let result: string
+    if (tabIndex !== 2) {
+      result = await window.api.translateText(transcription, outputLanguage)
+    } else {
+      result = await window.api.translateText(userEnteredText, outputLanguage)
+    }
+
     setTranslatedText(result)
   }
 
@@ -151,8 +159,19 @@ const App = (): React.ReactElement => {
     setOutputLanguage(event.target.value as AvailableLanguageCodes)
   }
 
+  const handleOnTabChange = (index: number): void => {
+    setTabIndex(index)
+
+    setTranslatedText('')
+    setTranslatedAudioUrl(null)
+    setTranscription('')
+    setUserEnteredText('')
+    setAudioFileArrayBuffer(undefined)
+    setOriginalAudioUrl(null)
+  }
+
   return (
-    <Tabs onChange={(index) => setTabIndex(index)} isFitted variant="enclosed-colored" w={'100vw'}>
+    <Tabs onChange={handleOnTabChange} isFitted variant="enclosed-colored" w={'100vw'}>
       <Heading size="lg" my={2} textAlign={'center'}>
         AI Voice Translator
       </Heading>
@@ -187,7 +206,11 @@ const App = (): React.ReactElement => {
         </TabPanel>
         <TabPanel>
           <Stack maxW={'500px'} mx="auto">
-            <Text>Not yet implemented 😢</Text>
+            <Text>Text To Be Translated:</Text>
+            <Textarea
+              value={userEnteredText}
+              onChange={(event) => setUserEnteredText(event.target.value)}
+            />
           </Stack>
         </TabPanel>
       </TabPanels>
