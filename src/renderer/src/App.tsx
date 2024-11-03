@@ -175,7 +175,7 @@ const App = (): React.ReactElement => {
       <Heading size="lg" my={2} textAlign={'center'}>
         AI Voice Translator
       </Heading>
-      <TabList mb="1em">
+      <TabList>
         <Tab>Speech-To-Speech</Tab>
         <Tab>Translate File</Tab>
         <Tab>Text-to-Speech</Tab>
@@ -210,6 +210,7 @@ const App = (): React.ReactElement => {
             <Textarea
               value={userEnteredText}
               onChange={(event) => setUserEnteredText(event.target.value)}
+              placeholder="Enter text to be translated here..."
             />
           </Stack>
         </TabPanel>
@@ -225,11 +226,15 @@ const App = (): React.ReactElement => {
               </audio>
             </Box>
             <Button onClick={transcribeAudioInArrayBuffer}>Transcribe</Button>
-            <Text>{transcription}</Text>
+            <Textarea
+              value={transcription}
+              onChange={(e) => setTranscription(e.target.value)}
+              placeholder="Transcribed text goes here..."
+            />
           </>
         )}
 
-        <Flex>
+        <Flex mb={4}>
           <Select
             name="languages"
             id="languages"
@@ -246,10 +251,14 @@ const App = (): React.ReactElement => {
             Translate
           </Button>
         </Flex>
-        <Text>{translatedText}</Text>
+        <Textarea
+          value={translatedText}
+          onChange={(e) => setTranslatedText(e.target.value)}
+          placeholder="Translated text goes here..."
+        />
 
         <Stack mt={4}>
-          <Button onClick={handleTextToSpeech}>Use AI Voice 🤖</Button>
+          <Button onClick={handleTextToSpeech}>Generate AI Voice 🤖</Button>
           <Text>Translated Audio:</Text>
           <audio controls style={{ width: '100%' }}>
             {translatedAudioUrl && <source src={translatedAudioUrl} type="audio/mp3" />}
