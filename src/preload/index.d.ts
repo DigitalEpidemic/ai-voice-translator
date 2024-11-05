@@ -1,5 +1,4 @@
 import { ElectronAPI } from '@electron-toolkit/preload'
-import { AvailableLanguages, languages } from '../types/languageTypes'
 
 declare global {
   interface Window {
@@ -7,7 +6,7 @@ declare global {
     api: {
       voiceFileUpload: (byteArray: Uint8Array) => Promise<string>
       translateTranscription: (text: string, language: string) => Promise<string>
-      textToSpeech: (text: string) => Promise<void>
+      textToSpeech: (text: string, voiceId: string) => Promise<void>
     }
   }
 }

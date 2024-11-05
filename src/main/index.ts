@@ -110,10 +110,10 @@ ipcMain.handle(
   }
 )
 
-ipcMain.handle('textToSpeech', async (_, text: string): Promise<void> => {
+ipcMain.handle('textToSpeech', async (_, text: string, voiceId: string): Promise<void> => {
   try {
     const audio = await elevenLabsClient.generate({
-      voice: 'Rachel',
+      voice: voiceId,
       model_id: 'eleven_turbo_v2_5',
       text
     })
