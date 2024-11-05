@@ -68,6 +68,7 @@ function App(): JSX.Element {
 
       <select onChange={handleVoiceIdChange}>
         <option value="LHEmo0XNW9f1ptZLyVTV">Jeff</option>
+        <option value="c19Xp8tRBmH4L5Km1T4C">Ana</option>
       </select>
     </>
   )

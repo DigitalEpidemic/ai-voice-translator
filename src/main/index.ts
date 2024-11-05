@@ -7,6 +7,7 @@ import translate from 'translate'
 import dotenv from 'dotenv'
 import { ElevenLabsClient } from 'elevenlabs'
 import { createWriteStream } from 'fs'
+import { v4 as uuidv4 } from 'uuid'
 
 dotenv.config()
 
@@ -118,8 +119,8 @@ ipcMain.handle('textToSpeech', async (_, text: string, voiceId: string): Promise
       text
     })
 
-    const fileName = `${app.getAppPath()}/geralt_of_rivia.mp3`
-    console.log({fileName})
+    const fileName = `${app.getAppPath()}/${uuidv4()}.mp3`
+    console.log({ fileName })
     const fileStream = createWriteStream(fileName)
 
     audio.pipe(fileStream)

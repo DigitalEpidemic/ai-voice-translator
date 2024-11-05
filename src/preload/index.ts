@@ -7,7 +7,8 @@ const api = {
     ipcRenderer.invoke('voiceFileUpload', byteArray),
   translateTranscription: (text: string, language: string): Promise<string> =>
     ipcRenderer.invoke('translateTranscription', text, language),
-  textToSpeech: (text: string, voiceId: string): Promise<void> => ipcRenderer.invoke('textToSpeech', text, voiceId)
+  textToSpeech: (text: string, voiceId: string): Promise<void> =>
+    ipcRenderer.invoke('textToSpeech', text, voiceId)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to
