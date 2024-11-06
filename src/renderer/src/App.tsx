@@ -337,7 +337,7 @@ const App = (): React.ReactElement => {
             <Button onClick={() => handleTextToSpeech()}>Generate AI Voice 🤖</Button>
           )}
           <Text>Translated Audio:</Text>
-          <audio controls style={{ width: '100%' }}>
+          <audio key={translatedAudioUrl} autoPlay controls style={{ width: '100%' }}>
             {translatedAudioUrl && <source src={translatedAudioUrl} type={'audio/mp3'} />}
             Your browser does not support the audio element.
           </audio>
