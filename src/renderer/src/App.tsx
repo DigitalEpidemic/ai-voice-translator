@@ -3,10 +3,12 @@ import {
   Box,
   Button,
   Flex,
+  FormLabel,
   Heading,
   HStack,
   Select,
   Stack,
+  Switch,
   Tab,
   TabList,
   TabPanel,
@@ -32,6 +34,7 @@ const App = (): React.ReactElement => {
   const [outputLanguage, setOutputLanguage] = useState<AvailableLanguageCodes>(languages[0].code)
   const [tabIndex, setTabIndex] = useState(0)
   const [userEnteredText, setUserEnteredText] = useState('')
+  const [individualSteps, setIndividualSteps] = useState(false)
 
   const handleAudioFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -49,6 +52,12 @@ const App = (): React.ReactElement => {
     const fileBlob = new Blob([byteArray], { type: 'audio/wav' })
     const blobUrl = URL.createObjectURL(fileBlob)
     setOriginalAudioUrl(blobUrl)
+
+    if (!individualSteps) {
+      const transcribedAudio = await transcribeAudioInArrayBuffer(byteArray)
+      const translation = await handleTranslatingText(transcribedAudio)
+      await handleTextToSpeech(translation)
+    }
   }
 
   const handleStartRecording = async (): Promise<void> => {
@@ -57,12 +66,10 @@ const App = (): React.ReactElement => {
     }
 
     try {
-      // This should return a valid MediaStream object
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: true
       })
 
-      // Now pass the MediaStream to MediaRecorder
       const mr = new MediaRecorder(stream)
       setMediaRecorder(mr)
 
@@ -75,13 +82,17 @@ const App = (): React.ReactElement => {
 
         const wavBuffer = await convertWebMToWav(audioBlob)
         setAudioFileArrayBuffer(wavBuffer)
-        // Send the audio data to the main process to save the file
         window.api.saveAudio(wavBuffer)
 
-        // Play the audio locally
         const audioUrl = URL.createObjectURL(audioBlob)
         setOriginalAudioUrl(audioUrl)
         setAudioChunks([])
+
+        if (!individualSteps) {
+          const transcribedAudio = await transcribeAudioInArrayBuffer(wavBuffer)
+          const translated = await handleTranslatingText(transcribedAudio)
+          await handleTextToSpeech(translated)
+        }
       }
 
       mr.start()
@@ -105,50 +116,61 @@ const App = (): React.ReactElement => {
   const convertWebMToWav = async (webmBlob: Blob): Promise<Uint8Array> => {
     const arrayBuffer = await webmBlob.arrayBuffer()
 
-    // Create an AudioContext instance (available in the renderer process)
     const audioContext = new AudioContext()
     const audioBuffer = await audioContext.decodeAudioData(arrayBuffer)
 
-    // Convert audioBuffer to WAV using wav-encoder
     const wavData = await WavEncoder.encode({
       sampleRate: audioBuffer.sampleRate,
-      channelData: [audioBuffer.getChannelData(0)] // Assuming mono audio
+      channelData: [audioBuffer.getChannelData(0)]
     })
 
     return new Uint8Array(wavData)
   }
 
-  const transcribeAudioInArrayBuffer = async (): Promise<void> => {
-    if (!audioFileArrayBuffer) {
-      return
+  const transcribeAudioInArrayBuffer = async (
+    arrayBufferOverride?: Uint8Array
+  ): Promise<string> => {
+    const arrayBuffer = arrayBufferOverride ?? audioFileArrayBuffer
+    if (!arrayBuffer) {
+      return ''
     }
 
-    const transcribedAudio = await window.api.transcribeAudio(audioFileArrayBuffer)
+    const transcribedAudio = await window.api.transcribeAudio(arrayBuffer)
     setTranscription(transcribedAudio)
+    return transcribedAudio
   }
 
-  const handleTranslatingText = async (): Promise<void> => {
-    if (!transcription && userEnteredText === '') {
-      return
+  const handleTranslatingText = async (transcriptionOverride?: string): Promise<string> => {
+    const transcribedText = transcriptionOverride ?? transcription
+
+    if (!transcribedText && userEnteredText === '') {
+      return ''
     }
 
-    let result: string
+    let translation: string
     if (tabIndex !== 2) {
-      result = await window.api.translateText(transcription, outputLanguage)
+      translation = await window.api.translateText(transcribedText, outputLanguage)
     } else {
-      result = await window.api.translateText(userEnteredText, outputLanguage)
+      translation = await window.api.translateText(userEnteredText, outputLanguage)
+      if (!individualSteps) {
+        await handleTextToSpeech(translation)
+      }
     }
 
-    setTranslatedText(result)
+    setTranslatedText(translation)
+
+    return translation
   }
 
-  const handleTextToSpeech = async (): Promise<void> => {
+  const handleTextToSpeech = async (textOverride?: string): Promise<void> => {
+    const textToGenerate = textOverride ?? translatedText
+
     const currentLanguage = languages.find((language) => language.code === outputLanguage)
-    if (!translatedText || !currentLanguage) {
+    if (!textToGenerate || !currentLanguage) {
       return
     }
 
-    const arrayBuffer = await window.api.textToSpeech(translatedText, currentLanguage.name)
+    const arrayBuffer = await window.api.textToSpeech(textToGenerate, currentLanguage.name)
     const blob = new Blob([arrayBuffer], { type: 'audio/mpeg' })
     const url = URL.createObjectURL(blob)
     setTranslatedAudioUrl(url)
@@ -171,10 +193,20 @@ const App = (): React.ReactElement => {
   }
 
   return (
-    <Tabs onChange={handleOnTabChange} isFitted variant="enclosed-colored" w={'100vw'}>
-      <Heading size="lg" my={2} textAlign={'center'}>
-        AI Voice Translator
-      </Heading>
+    <Tabs onChange={handleOnTabChange} isFitted variant={'enclosed-colored'} w={'100vw'}>
+      <Flex p={2} justifyContent={'space-between'} alignItems={'center'} position={'relative'}>
+        <Flex position={'absolute'} left={'50%'} transform={'translateX(-50%)'}>
+          <Heading size={'lg'} my={2} textAlign={'center'}>
+            AI Voice Translator
+          </Heading>
+        </Flex>
+        <Flex alignItems={'center'} ml={'auto'}>
+          <FormLabel mx={2} my={1} htmlFor={'individual-steps'}>
+            Individual Steps:
+          </FormLabel>
+          <Switch id={'individual-steps'} onChange={(e) => setIndividualSteps(e.target.checked)} />
+        </Flex>
+      </Flex>
       <TabList>
         <Tab>Speech-To-Speech</Tab>
         <Tab>Translate File</Tab>
@@ -182,7 +214,24 @@ const App = (): React.ReactElement => {
       </TabList>
       <TabPanels>
         <TabPanel>
-          <Stack maxW={'500px'} mx="auto">
+          <Stack maxW={'500px'} mx={'auto'}>
+            {!individualSteps && (
+              <>
+                <Text>Output Language:</Text>
+                <Select
+                  name={'languages'}
+                  id={'languages'}
+                  onChange={handleOnLanguageChange}
+                  value={outputLanguage}
+                >
+                  {languages.map((language) => (
+                    <option key={language.code} value={language.code}>
+                      {language.name}
+                    </option>
+                  ))}
+                </Select>
+              </>
+            )}
             <Text>Record Microphone:</Text>
             <HStack w={'100%'} justifyContent={'center'}>
               <Button
@@ -199,13 +248,30 @@ const App = (): React.ReactElement => {
           </Stack>
         </TabPanel>
         <TabPanel>
-          <Stack maxW={'500px'} mx="auto">
+          <Stack maxW={'500px'} mx={'auto'}>
+            {!individualSteps && (
+              <>
+                <Text>Output Language:</Text>
+                <Select
+                  name={'languages'}
+                  id={'languages'}
+                  onChange={handleOnLanguageChange}
+                  value={outputLanguage}
+                >
+                  {languages.map((language) => (
+                    <option key={language.code} value={language.code}>
+                      {language.name}
+                    </option>
+                  ))}
+                </Select>
+              </>
+            )}
             <Text>Upload Existing Audio File:</Text>
             <FileUploadButton buttonText="Upload File" onChange={handleAudioFileUpload} />
           </Stack>
         </TabPanel>
         <TabPanel>
-          <Stack maxW={'500px'} mx="auto">
+          <Stack maxW={'500px'} mx={'auto'}>
             <Text>Text To Be Translated:</Text>
             <Textarea
               value={userEnteredText}
@@ -216,16 +282,18 @@ const App = (): React.ReactElement => {
         </TabPanel>
       </TabPanels>
 
-      <Stack maxW={'500px'} mx="auto">
+      <Stack maxW={'500px'} mx={'auto'}>
         {tabIndex !== 2 && (
           <>
             <Box mb={4}>
               <audio controls style={{ width: '100%' }}>
-                {originalAudioUrl && <source src={originalAudioUrl} type="audio/wav" />}
+                {originalAudioUrl && <source src={originalAudioUrl} type={'audio/wav'} />}
                 Your browser does not support the audio element.
               </audio>
             </Box>
-            <Button onClick={transcribeAudioInArrayBuffer}>Transcribe</Button>
+            {individualSteps && (
+              <Button onClick={() => transcribeAudioInArrayBuffer()}>Transcribe</Button>
+            )}
             <Textarea
               value={transcription}
               onChange={(e) => setTranscription(e.target.value)}
@@ -234,23 +302,28 @@ const App = (): React.ReactElement => {
           </>
         )}
 
-        <Stack mt={4}>
+        <Stack mt={individualSteps || tabIndex === 2 ? 4 : 0}>
           <Flex>
-            <Select
-              name="languages"
-              id="languages"
-              onChange={handleOnLanguageChange}
-              value={outputLanguage}
-            >
-              {languages.map((language) => (
-                <option key={language.code} value={language.code}>
-                  {language.name}
-                </option>
-              ))}
-            </Select>
-            <Button w={'100%'} onClick={handleTranslatingText}>
-              Translate
-            </Button>
+            {(individualSteps || tabIndex === 2) && (
+              <>
+                <Select
+                  name={'languages'}
+                  id={'languages'}
+                  onChange={handleOnLanguageChange}
+                  value={outputLanguage}
+                >
+                  {languages.map((language) => (
+                    <option key={language.code} value={language.code}>
+                      {language.name}
+                    </option>
+                  ))}
+                </Select>
+
+                <Button w={'100%'} onClick={() => handleTranslatingText()}>
+                  Translate
+                </Button>
+              </>
+            )}
           </Flex>
           <Textarea
             value={translatedText}
@@ -260,10 +333,12 @@ const App = (): React.ReactElement => {
         </Stack>
 
         <Stack>
-          <Button onClick={handleTextToSpeech}>Generate AI Voice 🤖</Button>
+          {individualSteps && (
+            <Button onClick={() => handleTextToSpeech()}>Generate AI Voice 🤖</Button>
+          )}
           <Text>Translated Audio:</Text>
           <audio controls style={{ width: '100%' }}>
-            {translatedAudioUrl && <source src={translatedAudioUrl} type="audio/mp3" />}
+            {translatedAudioUrl && <source src={translatedAudioUrl} type={'audio/mp3'} />}
             Your browser does not support the audio element.
           </audio>
         </Stack>
