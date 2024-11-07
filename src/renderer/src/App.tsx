@@ -35,7 +35,7 @@ const App = (): React.ReactElement => {
   const [outputLanguage, setOutputLanguage] = useState<AvailableLanguageCodes>(languages[0].code)
   const [tabIndex, setTabIndex] = useState(0)
   const [userEnteredText, setUserEnteredText] = useState('')
-  const [individualSteps, setIndividualSteps] = useState(false)
+  const [debugSteps, setDebugSteps] = useState(false)
   const [inputLanguage, setInputLanguage] = useState<AvailableLanguageCodes>(languages[6].code)
   const [userEnteredURL, setUserEnteredURL] = useState('')
 
@@ -56,7 +56,7 @@ const App = (): React.ReactElement => {
     const blobUrl = URL.createObjectURL(fileBlob)
     setOriginalAudioUrl(blobUrl)
 
-    if (!individualSteps) {
+    if (!debugSteps) {
       const transcribedAudio = await transcribeAudioInArrayBuffer(byteArray)
       const translation = await handleTranslatingText(transcribedAudio)
       await handleTextToSpeech(translation)
@@ -91,7 +91,7 @@ const App = (): React.ReactElement => {
         setOriginalAudioUrl(audioUrl)
         setAudioChunks([])
 
-        if (!individualSteps) {
+        if (!debugSteps) {
           const transcribedAudio = await transcribeAudioInArrayBuffer(wavBuffer)
           const translated = await handleTranslatingText(transcribedAudio)
           await handleTextToSpeech(translated)
@@ -157,7 +157,7 @@ const App = (): React.ReactElement => {
       translation = await window.api.translateText(transcribedText, outputLanguage, inputLanguage)
     } else {
       translation = await window.api.translateText(userEnteredText, outputLanguage, inputLanguage)
-      if (!individualSteps) {
+      if (!debugSteps) {
         await handleTextToSpeech(translation)
       }
     }
@@ -191,9 +191,9 @@ const App = (): React.ReactElement => {
     setOutputLanguage(event.target.value as AvailableLanguageCodes)
   }
 
-  const handleOnIndividualStepsChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
-    console.log('Setting individual steps to:', event.target.checked)
-    setIndividualSteps(event.target.checked)
+  const handleOnDebugStepsChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
+    console.log('Setting debug steps to:', event.target.checked)
+    setDebugSteps(event.target.checked)
 
     if (event.target.checked) {
       window.resizeTo(900, 850)
@@ -224,7 +224,7 @@ const App = (): React.ReactElement => {
     const blobUrl = URL.createObjectURL(fileBlob)
     setOriginalAudioUrl(blobUrl)
 
-    if (!individualSteps) {
+    if (!debugSteps) {
       const transcribedAudio = await transcribeAudioInArrayBuffer(byteArray)
       const translation = await handleTranslatingText(transcribedAudio)
       await handleTextToSpeech(translation)
@@ -240,10 +240,10 @@ const App = (): React.ReactElement => {
           </Heading>
         </Flex>
         <Flex alignItems={'center'} ml={'auto'}>
-          <FormLabel mx={2} my={1} htmlFor={'individual-steps'}>
-            Individual Steps:
+          <FormLabel mx={2} my={1} htmlFor={'debug-steps'}>
+            Debug Steps:
           </FormLabel>
-          <Switch id={'individual-steps'} onChange={handleOnIndividualStepsChange} />
+          <Switch id={'debug-steps'} onChange={handleOnDebugStepsChange} />
         </Flex>
       </Flex>
       <TabList>
@@ -255,7 +255,7 @@ const App = (): React.ReactElement => {
       <TabPanels>
         <TabPanel>
           <Stack maxW={'500px'} mx={'auto'}>
-            {individualSteps ? (
+            {debugSteps ? (
               <Flex flexDir={'column'} flexGrow={1}>
                 <Text>Input Language:</Text>
                 <Select
@@ -322,7 +322,7 @@ const App = (): React.ReactElement => {
         </TabPanel>
         <TabPanel>
           <Stack maxW={'500px'} mx={'auto'}>
-            {individualSteps ? (
+            {debugSteps ? (
               <Flex flexDir={'column'} flexGrow={1}>
                 <Text>Input Language:</Text>
                 <Select
@@ -378,7 +378,7 @@ const App = (): React.ReactElement => {
         </TabPanel>
         <TabPanel>
           <Stack maxW={'500px'} mx={'auto'}>
-            {individualSteps ? (
+            {debugSteps ? (
               <Flex flexDir={'column'} flexGrow={1}>
                 <Text>Input Language:</Text>
                 <Select
@@ -477,7 +477,7 @@ const App = (): React.ReactElement => {
                 Your browser does not support the audio element.
               </audio>
             </Box>
-            {individualSteps && (
+            {debugSteps && (
               <Button onClick={() => transcribeAudioInArrayBuffer()}>Transcribe</Button>
             )}
             <Textarea
@@ -488,9 +488,9 @@ const App = (): React.ReactElement => {
           </>
         )}
 
-        <Stack mt={individualSteps || tabIndex === 3 ? 4 : 0}>
+        <Stack mt={debugSteps || tabIndex === 3 ? 4 : 0}>
           <Flex>
-            {(individualSteps || tabIndex === 3) && (
+            {(debugSteps || tabIndex === 3) && (
               <>
                 <Select
                   name={'languages'}
@@ -519,9 +519,7 @@ const App = (): React.ReactElement => {
         </Stack>
 
         <Stack>
-          {individualSteps && (
-            <Button onClick={() => handleTextToSpeech()}>Generate AI Voice 🤖</Button>
-          )}
+          {debugSteps && <Button onClick={() => handleTextToSpeech()}>Generate AI Voice 🤖</Button>}
           <Text>Translated Audio:</Text>
           <audio key={translatedAudioUrl} autoPlay controls style={{ width: '100%' }}>
             {translatedAudioUrl && <source src={translatedAudioUrl} type={'audio/mp3'} />}
