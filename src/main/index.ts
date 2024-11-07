@@ -25,7 +25,7 @@ function createWindow(): void {
   const mainWindow = new BrowserWindow({
     title: 'AI Voice Translator',
     width: 900,
-    height: 775,
+    height: 675,
     show: false,
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon } : {}),

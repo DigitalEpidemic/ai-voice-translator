@@ -181,6 +181,17 @@ const App = (): React.ReactElement => {
     setOutputLanguage(event.target.value as AvailableLanguageCodes)
   }
 
+  const handleOnIndividualStepsChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
+    console.log('Setting individual steps to:', event.target.checked)
+    setIndividualSteps(event.target.checked)
+
+    if (event.target.checked) {
+      window.resizeTo(900, 825)
+    } else {
+      window.resizeTo(900, 675)
+    }
+  }
+
   const handleOnTabChange = (index: number): void => {
     setTabIndex(index)
 
@@ -205,6 +216,7 @@ const App = (): React.ReactElement => {
             Individual Steps:
           </FormLabel>
           <Switch id={'individual-steps'} onChange={(e) => setIndividualSteps(e.target.checked)} />
+          <Switch id={'individual-steps'} onChange={handleOnIndividualStepsChange} />
         </Flex>
       </Flex>
       <TabList>
