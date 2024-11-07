@@ -15,7 +15,8 @@ const api = {
     inputLanguage: AvailableLanguageCodes
   ): Promise<string> => ipcRenderer.invoke('translate-text', text, outputLanguage, inputLanguage),
   textToSpeech: (text: string, language: AvailableLanguages): Promise<Uint8Array> =>
-    ipcRenderer.invoke('text-to-speech', text, language)
+    ipcRenderer.invoke('text-to-speech', text, language),
+  saveAudioURL: (url: string): Promise<Uint8Array> => ipcRenderer.invoke('save-audio-url', url)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

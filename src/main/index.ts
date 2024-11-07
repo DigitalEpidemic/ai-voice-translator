@@ -30,7 +30,7 @@ function createWindow(): void {
   const mainWindow = new BrowserWindow({
     title: 'AI Voice Translator',
     width: 900,
-    height: 675,
+    height: 700,
     show: false,
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon } : {}),
@@ -142,6 +142,30 @@ ipcMain.on('save-audio', (_, wavBuffer: Uint8Array) => {
   const filePath = path.join(appDirectory, filename) // Specify the file path
 
   saveAudioBufferToFilePath(filePath, wavBuffer)
+})
+
+ipcMain.handle('save-audio-url', async (_, url: string): Promise<Uint8Array> => {
+  const response = await fetch(url)
+  if (!response.ok) {
+    throw new Error(`Failed to fetch audio file: ${response.statusText}`)
+  }
+
+  const arrayBuffer = await response.arrayBuffer()
+  const uint8Array = new Uint8Array(arrayBuffer)
+
+  const filename = `url-${uuid()}.wav`
+  const appDirectory = app.getAppPath()
+  const filePath = path.join(appDirectory, filename)
+
+  fs.writeFile(filePath, uint8Array, (err) => {
+    if (err) {
+      console.error('Error saving file:', err)
+    } else {
+      console.log(`File saved to ${filePath}`)
+    }
+  })
+
+  return uint8Array
 })
 
 ipcMain.handle(

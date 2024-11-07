@@ -6,6 +6,7 @@ import {
   FormLabel,
   Heading,
   HStack,
+  Input,
   Select,
   Stack,
   Switch,
@@ -36,6 +37,7 @@ const App = (): React.ReactElement => {
   const [userEnteredText, setUserEnteredText] = useState('')
   const [individualSteps, setIndividualSteps] = useState(false)
   const [inputLanguage, setInputLanguage] = useState<AvailableLanguageCodes>(languages[6].code)
+  const [userEnteredURL, setUserEnteredURL] = useState('')
 
   const handleAudioFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -151,7 +153,7 @@ const App = (): React.ReactElement => {
     }
 
     let translation: string
-    if (tabIndex !== 2) {
+    if (tabIndex !== 3) {
       translation = await window.api.translateText(transcribedText, outputLanguage, inputLanguage)
     } else {
       translation = await window.api.translateText(userEnteredText, outputLanguage, inputLanguage)
@@ -194,9 +196,9 @@ const App = (): React.ReactElement => {
     setIndividualSteps(event.target.checked)
 
     if (event.target.checked) {
-      window.resizeTo(900, 825)
+      window.resizeTo(900, 850)
     } else {
-      window.resizeTo(900, 675)
+      window.resizeTo(900, 700)
     }
   }
 
@@ -209,6 +211,24 @@ const App = (): React.ReactElement => {
     setUserEnteredText('')
     setAudioFileArrayBuffer(undefined)
     setOriginalAudioUrl(null)
+  }
+
+  const handleURLSubmission = async (): Promise<void> => {
+    if (!userEnteredURL) {
+      return
+    }
+
+    const byteArray = await window.api.saveAudioURL(userEnteredURL)
+    setAudioFileArrayBuffer(byteArray)
+    const fileBlob = new Blob([byteArray], { type: 'audio/wav' })
+    const blobUrl = URL.createObjectURL(fileBlob)
+    setOriginalAudioUrl(blobUrl)
+
+    if (!individualSteps) {
+      const transcribedAudio = await transcribeAudioInArrayBuffer(byteArray)
+      const translation = await handleTranslatingText(transcribedAudio)
+      await handleTextToSpeech(translation)
+    }
   }
 
   return (
@@ -229,6 +249,7 @@ const App = (): React.ReactElement => {
       <TabList>
         <Tab>Speech-To-Speech</Tab>
         <Tab>Translate File</Tab>
+        <Tab>Translate URL</Tab>
         <Tab>Text-to-Speech</Tab>
       </TabList>
       <TabPanels>
@@ -357,6 +378,69 @@ const App = (): React.ReactElement => {
         </TabPanel>
         <TabPanel>
           <Stack maxW={'500px'} mx={'auto'}>
+            {individualSteps ? (
+              <Flex flexDir={'column'} flexGrow={1}>
+                <Text>Input Language:</Text>
+                <Select
+                  name={'Input Languages'}
+                  id={'input-languages'}
+                  onChange={handleOnInputLanguageChange}
+                  value={inputLanguage}
+                >
+                  {languages.map((language) => (
+                    <option key={language.code} value={language.code}>
+                      {language.name}
+                    </option>
+                  ))}
+                </Select>
+              </Flex>
+            ) : (
+              <HStack w={'100%'}>
+                <Flex flexDir={'column'} flexGrow={1}>
+                  <Text>Input Language:</Text>
+                  <Select
+                    name={'Input Languages'}
+                    id={'input-languages'}
+                    onChange={handleOnInputLanguageChange}
+                    value={inputLanguage}
+                  >
+                    {languages.map((language) => (
+                      <option key={language.code} value={language.code}>
+                        {language.name}
+                      </option>
+                    ))}
+                  </Select>
+                </Flex>
+                <Flex flexDir={'column'} flexGrow={1}>
+                  <Text>Output Language:</Text>
+                  <Select
+                    name={'Output Languages'}
+                    id={'output-languages'}
+                    onChange={handleOnOutputLanguageChange}
+                    value={outputLanguage}
+                  >
+                    {languages.map((language) => (
+                      <option key={language.code} value={language.code}>
+                        {language.name}
+                      </option>
+                    ))}
+                  </Select>
+                </Flex>
+              </HStack>
+            )}
+            <Flex flexDir={'column'} flexGrow={1}>
+              <Text>Audio URL:</Text>
+              <Input
+                value={userEnteredURL}
+                onChange={(event) => setUserEnteredURL(event.target.value)}
+                placeholder="Enter URL here..."
+              />
+            </Flex>
+            <Button onClick={() => handleURLSubmission()}>Submit URL</Button>
+          </Stack>
+        </TabPanel>
+        <TabPanel>
+          <Stack maxW={'500px'} mx={'auto'}>
             <Flex flexDir={'column'} flexGrow={1}>
               <Text>Input Language:</Text>
               <Select
@@ -385,7 +469,7 @@ const App = (): React.ReactElement => {
       </TabPanels>
 
       <Stack maxW={'500px'} mx={'auto'}>
-        {tabIndex !== 2 && (
+        {tabIndex !== 3 && (
           <>
             <Box mb={4}>
               <audio key={originalAudioUrl} controls style={{ width: '100%' }}>
@@ -404,9 +488,9 @@ const App = (): React.ReactElement => {
           </>
         )}
 
-        <Stack mt={individualSteps || tabIndex === 2 ? 4 : 0}>
+        <Stack mt={individualSteps || tabIndex === 3 ? 4 : 0}>
           <Flex>
-            {(individualSteps || tabIndex === 2) && (
+            {(individualSteps || tabIndex === 3) && (
               <>
                 <Select
                   name={'languages'}
