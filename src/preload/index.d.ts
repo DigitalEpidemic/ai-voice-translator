@@ -5,9 +5,16 @@ declare global {
   interface Window {
     electron: ElectronAPI
     api: {
-      transcribeAudio: (byteArray: Uint8Array) => Promise<string>
+      transcribeAudio: (
+        byteArray: Uint8Array,
+        inputLanguage: AvailableLanguageCodes
+      ) => Promise<string>
       saveAudio: (audioBuffer: Uint8Array) => void
-      translateText: (text: string, targetLanguage: AvailableLanguageCodes) => Promise<string>
+      translateText: (
+        text: string,
+        outputLanguage: AvailableLanguageCodes,
+        inputLanguage: AvailableLanguageCodes
+      ) => Promise<string>
       textToSpeech: (text: string, language: AvailableLanguages) => Promise<Uint8Array>
     }
   }

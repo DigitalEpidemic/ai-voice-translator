@@ -35,6 +35,7 @@ const App = (): React.ReactElement => {
   const [tabIndex, setTabIndex] = useState(0)
   const [userEnteredText, setUserEnteredText] = useState('')
   const [individualSteps, setIndividualSteps] = useState(false)
+  const [inputLanguage, setInputLanguage] = useState<AvailableLanguageCodes>(languages[6].code)
 
   const handleAudioFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -128,14 +129,16 @@ const App = (): React.ReactElement => {
   }
 
   const transcribeAudioInArrayBuffer = async (
-    arrayBufferOverride?: Uint8Array
+    arrayBufferOverride?: Uint8Array,
+    languageOverride?: AvailableLanguageCodes
   ): Promise<string> => {
     const arrayBuffer = arrayBufferOverride ?? audioFileArrayBuffer
-    if (!arrayBuffer) {
+    const language = languageOverride ?? inputLanguage
+    if (!arrayBuffer || !language) {
       return ''
     }
 
-    const transcribedAudio = await window.api.transcribeAudio(arrayBuffer)
+    const transcribedAudio = await window.api.transcribeAudio(arrayBuffer, language)
     setTranscription(transcribedAudio)
     return transcribedAudio
   }
@@ -149,9 +152,9 @@ const App = (): React.ReactElement => {
 
     let translation: string
     if (tabIndex !== 2) {
-      translation = await window.api.translateText(transcribedText, outputLanguage)
+      translation = await window.api.translateText(transcribedText, outputLanguage, inputLanguage)
     } else {
-      translation = await window.api.translateText(userEnteredText, outputLanguage)
+      translation = await window.api.translateText(userEnteredText, outputLanguage, inputLanguage)
       if (!individualSteps) {
         await handleTextToSpeech(translation)
       }
@@ -176,7 +179,12 @@ const App = (): React.ReactElement => {
     setTranslatedAudioUrl(url)
   }
 
-  const handleOnLanguageChange = (event: React.ChangeEvent<HTMLSelectElement>): void => {
+  const handleOnInputLanguageChange = (event: React.ChangeEvent<HTMLSelectElement>): void => {
+    console.log('Setting input language to:', event.target.value)
+    setInputLanguage(event.target.value as AvailableLanguageCodes)
+  }
+
+  const handleOnOutputLanguageChange = (event: React.ChangeEvent<HTMLSelectElement>): void => {
     console.log('Setting output language to:', event.target.value)
     setOutputLanguage(event.target.value as AvailableLanguageCodes)
   }
@@ -215,7 +223,6 @@ const App = (): React.ReactElement => {
           <FormLabel mx={2} my={1} htmlFor={'individual-steps'}>
             Individual Steps:
           </FormLabel>
-          <Switch id={'individual-steps'} onChange={(e) => setIndividualSteps(e.target.checked)} />
           <Switch id={'individual-steps'} onChange={handleOnIndividualStepsChange} />
         </Flex>
       </Flex>
@@ -227,14 +234,14 @@ const App = (): React.ReactElement => {
       <TabPanels>
         <TabPanel>
           <Stack maxW={'500px'} mx={'auto'}>
-            {!individualSteps && (
-              <>
-                <Text>Output Language:</Text>
+            {individualSteps ? (
+              <Flex flexDir={'column'} flexGrow={1}>
+                <Text>Input Language:</Text>
                 <Select
-                  name={'languages'}
-                  id={'languages'}
-                  onChange={handleOnLanguageChange}
-                  value={outputLanguage}
+                  name={'Input Languages'}
+                  id={'input-languages'}
+                  onChange={handleOnInputLanguageChange}
+                  value={inputLanguage}
                 >
                   {languages.map((language) => (
                     <option key={language.code} value={language.code}>
@@ -242,7 +249,40 @@ const App = (): React.ReactElement => {
                     </option>
                   ))}
                 </Select>
-              </>
+              </Flex>
+            ) : (
+              <HStack w={'100%'}>
+                <Flex flexDir={'column'} flexGrow={1}>
+                  <Text>Input Language:</Text>
+                  <Select
+                    name={'Input Languages'}
+                    id={'input-languages'}
+                    onChange={handleOnInputLanguageChange}
+                    value={inputLanguage}
+                  >
+                    {languages.map((language) => (
+                      <option key={language.code} value={language.code}>
+                        {language.name}
+                      </option>
+                    ))}
+                  </Select>
+                </Flex>
+                <Flex flexDir={'column'} flexGrow={1}>
+                  <Text>Output Language:</Text>
+                  <Select
+                    name={'Output Languages'}
+                    id={'output-languages'}
+                    onChange={handleOnOutputLanguageChange}
+                    value={outputLanguage}
+                  >
+                    {languages.map((language) => (
+                      <option key={language.code} value={language.code}>
+                        {language.name}
+                      </option>
+                    ))}
+                  </Select>
+                </Flex>
+              </HStack>
             )}
             <Text>Record Microphone:</Text>
             <HStack w={'100%'} justifyContent={'center'}>
@@ -261,14 +301,14 @@ const App = (): React.ReactElement => {
         </TabPanel>
         <TabPanel>
           <Stack maxW={'500px'} mx={'auto'}>
-            {!individualSteps && (
-              <>
-                <Text>Output Language:</Text>
+            {individualSteps ? (
+              <Flex flexDir={'column'} flexGrow={1}>
+                <Text>Input Language:</Text>
                 <Select
-                  name={'languages'}
-                  id={'languages'}
-                  onChange={handleOnLanguageChange}
-                  value={outputLanguage}
+                  name={'Input Languages'}
+                  id={'input-languages'}
+                  onChange={handleOnInputLanguageChange}
+                  value={inputLanguage}
                 >
                   {languages.map((language) => (
                     <option key={language.code} value={language.code}>
@@ -276,7 +316,40 @@ const App = (): React.ReactElement => {
                     </option>
                   ))}
                 </Select>
-              </>
+              </Flex>
+            ) : (
+              <HStack w={'100%'}>
+                <Flex flexDir={'column'} flexGrow={1}>
+                  <Text>Input Language:</Text>
+                  <Select
+                    name={'Input Languages'}
+                    id={'input-languages'}
+                    onChange={handleOnInputLanguageChange}
+                    value={inputLanguage}
+                  >
+                    {languages.map((language) => (
+                      <option key={language.code} value={language.code}>
+                        {language.name}
+                      </option>
+                    ))}
+                  </Select>
+                </Flex>
+                <Flex flexDir={'column'} flexGrow={1}>
+                  <Text>Output Language:</Text>
+                  <Select
+                    name={'Output Languages'}
+                    id={'output-languages'}
+                    onChange={handleOnOutputLanguageChange}
+                    value={outputLanguage}
+                  >
+                    {languages.map((language) => (
+                      <option key={language.code} value={language.code}>
+                        {language.name}
+                      </option>
+                    ))}
+                  </Select>
+                </Flex>
+              </HStack>
             )}
             <Text>Upload Existing Audio File:</Text>
             <FileUploadButton buttonText="Upload File" onChange={handleAudioFileUpload} />
@@ -284,12 +357,29 @@ const App = (): React.ReactElement => {
         </TabPanel>
         <TabPanel>
           <Stack maxW={'500px'} mx={'auto'}>
-            <Text>Text To Be Translated:</Text>
-            <Textarea
-              value={userEnteredText}
-              onChange={(event) => setUserEnteredText(event.target.value)}
-              placeholder="Enter text to be translated here..."
-            />
+            <Flex flexDir={'column'} flexGrow={1}>
+              <Text>Input Language:</Text>
+              <Select
+                name={'Input Languages'}
+                id={'input-languages'}
+                onChange={handleOnInputLanguageChange}
+                value={inputLanguage}
+              >
+                {languages.map((language) => (
+                  <option key={language.code} value={language.code}>
+                    {language.name}
+                  </option>
+                ))}
+              </Select>
+            </Flex>
+            <Flex flexDir={'column'} flexGrow={1}>
+              <Text>Text To Be Translated:</Text>
+              <Textarea
+                value={userEnteredText}
+                onChange={(event) => setUserEnteredText(event.target.value)}
+                placeholder="Enter text to be translated here..."
+              />
+            </Flex>
           </Stack>
         </TabPanel>
       </TabPanels>
@@ -298,7 +388,7 @@ const App = (): React.ReactElement => {
         {tabIndex !== 2 && (
           <>
             <Box mb={4}>
-              <audio controls style={{ width: '100%' }}>
+              <audio key={originalAudioUrl} controls style={{ width: '100%' }}>
                 {originalAudioUrl && <source src={originalAudioUrl} type={'audio/wav'} />}
                 Your browser does not support the audio element.
               </audio>
@@ -321,7 +411,7 @@ const App = (): React.ReactElement => {
                 <Select
                   name={'languages'}
                   id={'languages'}
-                  onChange={handleOnLanguageChange}
+                  onChange={handleOnOutputLanguageChange}
                   value={outputLanguage}
                 >
                   {languages.map((language) => (

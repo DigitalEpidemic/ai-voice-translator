@@ -27,6 +27,7 @@
     "@electron-toolkit/utils": "^3.0.0",
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
+    "assemblyai": "^4.8.0",
     "dotenv": "^16.4.5",
     "elevenlabs": "^0.17.1",
     "fluent-ffmpeg": "^2.1.3",

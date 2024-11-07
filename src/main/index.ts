@@ -11,10 +11,15 @@ import { v4 as uuid } from 'uuid'
 import icon from '../../resources/icon.png?asset'
 import ffmpeg from 'fluent-ffmpeg'
 import { AvailableLanguageCodes, AvailableLanguages, languages } from '@/types/languageTypes'
+import { AssemblyAI } from 'assemblyai'
 
 dotenv.config()
 
 const deepgramClient = createClient(process.env.VITE_DEEPGRAM_API_KEY)
+
+const assemblyAIClient = new AssemblyAI({
+  apiKey: process.env.VITE_ASSEMBLYAI_API_KEY as string
+})
 
 const elevenLabsClient = new ElevenLabsClient({
   apiKey: process.env.VITE_ELEVENLABS_API_KEY as string
@@ -89,30 +94,47 @@ app.on('window-all-closed', () => {
   }
 })
 
-ipcMain.handle('transcribe-audio', async (_, uint8Array: Uint8Array): Promise<string> => {
-  console.log('Transcribing audio...')
+ipcMain.handle(
+  'transcribe-audio',
+  async (_, uint8Array: Uint8Array, inputLanguage: AvailableLanguageCodes): Promise<string> => {
+    console.log('Transcribing audio...')
+    console.log('Input language:', inputLanguage)
 
-  try {
-    const audioBuffer = Buffer.from(uint8Array)
+    const transcriber = languages.find((language) => language.code === inputLanguage)?.transcriber
+    console.log('Transcriber:', transcriber)
 
-    const response = await deepgramClient.listen.prerecorded.transcribeFile(audioBuffer, {
-      punctuate: true,
-      language: 'en-US',
-      model: 'nova-2'
-    })
+    try {
+      if (transcriber === 'deepgram') {
+        const audioBuffer = Buffer.from(uint8Array)
+        const response = await deepgramClient.listen.prerecorded.transcribeFile(audioBuffer, {
+          punctuate: true,
+          language: inputLanguage,
+          model: 'nova-2'
+        })
 
-    if (response.result && response.result.results.channels.length > 0) {
-      const transcription = response.result.results.channels[0].alternatives[0]?.transcript
-      console.log('Transcription:', transcription)
-      return transcription
-    } else {
-      console.error('No transcription available in response:', response)
+        if (response.result && response.result.results.channels.length > 0) {
+          const transcription = response.result.results.channels[0].alternatives[0]?.transcript
+          console.log('Transcription:', transcription)
+          return transcription
+        } else {
+          console.error('No transcription available in response:', response)
+        }
+      } else if (transcriber === 'assemblyai') {
+        const transcription = await assemblyAIClient.transcripts.transcribe({
+          audio: uint8Array,
+          speech_model: 'nano',
+          language_code: inputLanguage,
+          punctuate: false
+        })
+        console.log('Transcription:', transcription.text)
+        return transcription.text ?? ''
+      }
+    } catch (error) {
+      console.error('Error transcribing audio:', error)
     }
-  } catch (error) {
-    console.error('Error transcribing audio:', error)
+    return ''
   }
-  return ''
-})
+)
 
 ipcMain.on('save-audio', (_, wavBuffer: Uint8Array) => {
   const filename = `recording-${uuid()}.wav`
@@ -124,13 +146,23 @@ ipcMain.on('save-audio', (_, wavBuffer: Uint8Array) => {
 
 ipcMain.handle(
   'translate-text',
-  async (_, text: string, targetLanguage: AvailableLanguageCodes): Promise<string> => {
-    const fullLanguageName = languages.find((language) => language.code === targetLanguage)?.name
-    console.log(`Translating text into ${fullLanguageName}...`)
+  async (
+    _,
+    text: string,
+    outputLanguage: AvailableLanguageCodes,
+    inputLanguage: AvailableLanguageCodes
+  ): Promise<string> => {
+    const fullOutputLanguageName = languages.find(
+      (language) => language.code === outputLanguage
+    )?.name
+    const fullInputLanguageName = languages.find(
+      (language) => language.code === inputLanguage
+    )?.name
+    console.log(`Translating text into ${fullOutputLanguageName} from ${fullInputLanguageName}...`)
     translate.engine = 'google'
 
     try {
-      const result = await translate(text, { to: targetLanguage })
+      const result = await translate(text, { to: outputLanguage, from: inputLanguage })
       console.log(` ${result}`)
       return result
     } catch (e) {

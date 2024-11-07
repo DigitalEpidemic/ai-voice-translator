@@ -4,11 +4,16 @@ import { AvailableLanguageCodes, AvailableLanguages } from '@/types/languageType
 
 // Custom APIs for renderer
 const api = {
-  transcribeAudio: (byteArray: Uint8Array): Promise<string> =>
-    ipcRenderer.invoke('transcribe-audio', byteArray),
+  transcribeAudio: (
+    byteArray: Uint8Array,
+    inputLanguage: AvailableLanguageCodes
+  ): Promise<string> => ipcRenderer.invoke('transcribe-audio', byteArray, inputLanguage),
   saveAudio: (audioBuffer: Buffer): void => ipcRenderer.send('save-audio', audioBuffer),
-  translateText: (text: string, targetLanguage: AvailableLanguageCodes): Promise<string> =>
-    ipcRenderer.invoke('translate-text', text, targetLanguage),
+  translateText: (
+    text: string,
+    outputLanguage: AvailableLanguageCodes,
+    inputLanguage: AvailableLanguageCodes
+  ): Promise<string> => ipcRenderer.invoke('translate-text', text, outputLanguage, inputLanguage),
   textToSpeech: (text: string, language: AvailableLanguages): Promise<Uint8Array> =>
     ipcRenderer.invoke('text-to-speech', text, language)
 }
