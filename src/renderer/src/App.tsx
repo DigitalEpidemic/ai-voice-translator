@@ -19,6 +19,7 @@ import {
 } from '@chakra-ui/react'
 import React, { useState } from 'react'
 import WavEncoder from 'wav-encoder'
+import { AudioPlayer } from './components/AudioPlayer'
 import { FileUploadButton } from './components/FileUpload'
 import { LanguageDropdown } from './components/LanguageDropdown'
 import { LanguageDropdowns } from './components/LanguageDropdowns'
@@ -232,6 +233,23 @@ const App = (): React.ReactElement => {
     }
   }
 
+  const renderLanguageDropdowns = (): JSX.Element => {
+    return debugMode ? (
+      <LanguageDropdown
+        label={'Input Language'}
+        value={inputLanguage}
+        onChange={handleOnInputLanguageChange}
+      />
+    ) : (
+      <LanguageDropdowns
+        inputLanguageValue={inputLanguage}
+        inputLangauageOnChange={handleOnInputLanguageChange}
+        outputLanguageValue={outputLanguage}
+        outputLangauageOnChange={handleOnOutputLanguageChange}
+      />
+    )
+  }
+
   return (
     <Tabs onChange={handleOnTabChange} isFitted variant={'enclosed-colored'} w={'100vw'}>
       <Flex p={2} justifyContent={'space-between'} alignItems={'center'} position={'relative'}>
@@ -256,20 +274,7 @@ const App = (): React.ReactElement => {
       <TabPanels>
         <TabPanel>
           <Stack maxW={'500px'} mx={'auto'}>
-            {debugMode ? (
-              <LanguageDropdown
-                label={'Input Language'}
-                value={inputLanguage}
-                onChange={handleOnInputLanguageChange}
-              />
-            ) : (
-              <LanguageDropdowns
-                inputLanguageValue={inputLanguage}
-                inputLangauageOnChange={handleOnInputLanguageChange}
-                outputLanguageValue={outputLanguage}
-                outputLangauageOnChange={handleOnOutputLanguageChange}
-              />
-            )}
+            {renderLanguageDropdowns()}
             <Text>Record Microphone:</Text>
             <HStack w={'100%'} justifyContent={'center'}>
               <Button
@@ -287,40 +292,14 @@ const App = (): React.ReactElement => {
         </TabPanel>
         <TabPanel>
           <Stack maxW={'500px'} mx={'auto'}>
-            {debugMode ? (
-              <LanguageDropdown
-                label={'Input Language'}
-                value={inputLanguage}
-                onChange={handleOnInputLanguageChange}
-              />
-            ) : (
-              <LanguageDropdowns
-                inputLanguageValue={inputLanguage}
-                inputLangauageOnChange={handleOnInputLanguageChange}
-                outputLanguageValue={outputLanguage}
-                outputLangauageOnChange={handleOnOutputLanguageChange}
-              />
-            )}
+            {renderLanguageDropdowns()}
             <Text>Upload Existing Audio File:</Text>
             <FileUploadButton buttonText="Upload File" onChange={handleAudioFileUpload} />
           </Stack>
         </TabPanel>
         <TabPanel>
           <Stack maxW={'500px'} mx={'auto'}>
-            {debugMode ? (
-              <LanguageDropdown
-                label={'Input Language'}
-                value={inputLanguage}
-                onChange={handleOnInputLanguageChange}
-              />
-            ) : (
-              <LanguageDropdowns
-                inputLanguageValue={inputLanguage}
-                inputLangauageOnChange={handleOnInputLanguageChange}
-                outputLanguageValue={outputLanguage}
-                outputLangauageOnChange={handleOnOutputLanguageChange}
-              />
-            )}
+            {renderLanguageDropdowns()}
             <Flex flexDir={'column'} flexGrow={1}>
               <Text>Audio URL:</Text>
               <Input
@@ -355,10 +334,7 @@ const App = (): React.ReactElement => {
         {tabIndex !== 3 && (
           <>
             <Box mb={4}>
-              <audio key={originalAudioUrl} controls style={{ width: '100%' }}>
-                {originalAudioUrl && <source src={originalAudioUrl} type={'audio/wav'} />}
-                Your browser does not support the audio element.
-              </audio>
+              <AudioPlayer url={originalAudioUrl} type={'audio/wav'} />
             </Box>
             {debugMode && (
               <Button onClick={() => transcribeAudioInArrayBuffer()}>Transcribe</Button>
@@ -392,10 +368,7 @@ const App = (): React.ReactElement => {
         <Stack>
           {debugMode && <Button onClick={() => handleTextToSpeech()}>Generate AI Voice 🤖</Button>}
           <Text>Translated Audio:</Text>
-          <audio key={translatedAudioUrl} autoPlay controls style={{ width: '100%' }}>
-            {translatedAudioUrl && <source src={translatedAudioUrl} type={'audio/mp3'} />}
-            Your browser does not support the audio element.
-          </audio>
+          <AudioPlayer url={translatedAudioUrl} autoplay type={'audio/mp3'} />
         </Stack>
       </Stack>
     </Tabs>
