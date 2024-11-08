@@ -24,6 +24,18 @@ import { FileUploadButton } from './components/FileUpload'
 import { LanguageDropdown } from './components/LanguageDropdown'
 import { LanguageDropdowns } from './components/LanguageDropdowns'
 
+const WINDOW_WIDTH = 900
+const WINDOW_HEIGHT = 700
+const WINDOW_HEIGHT_DEBUG_MODE = 850
+const TAB_INDEXES = {
+  SpeechToText: 0,
+  TranslateFile: 1,
+  TranslateURL: 2,
+  TextToSpeech: 3
+}
+const TAGALOG_LANGUAGE = languages[0]
+const ENGLISH_LANGUAGE = languages[6]
+
 const App = (): React.ReactElement => {
   const [originalAudioUrl, setOriginalAudioUrl] = useState<string | null>(null)
   const [translatedAudioUrl, setTranslatedAudioUrl] = useState<string | null>(null)
@@ -34,12 +46,15 @@ const App = (): React.ReactElement => {
   const [audioFileArrayBuffer, setAudioFileArrayBuffer] = useState<Uint8Array>()
   const [transcription, setTranscription] = useState<string>('')
   const [translatedText, setTranslatedText] = useState<string>('')
-  const [outputLanguage, setOutputLanguage] = useState<AvailableLanguageCodes>(languages[0].code)
-  const [tabIndex, setTabIndex] = useState(0)
+  const [outputLanguage, setOutputLanguage] = useState<AvailableLanguageCodes>(
+    TAGALOG_LANGUAGE.code
+  )
+  const [tabIndex, setTabIndex] = useState(TAB_INDEXES.SpeechToText)
   const [userEnteredText, setUserEnteredText] = useState('')
   const [debugMode, setDebugMode] = useState(false)
-  const [inputLanguage, setInputLanguage] = useState<AvailableLanguageCodes>(languages[6].code)
+  const [inputLanguage, setInputLanguage] = useState<AvailableLanguageCodes>(ENGLISH_LANGUAGE.code)
   const [userEnteredURL, setUserEnteredURL] = useState('')
+  const isTextToSpeechTabActive = tabIndex === TAB_INDEXES.TextToSpeech
 
   const handleAudioFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -149,7 +164,7 @@ const App = (): React.ReactElement => {
 
   const handleTranslatingText = async (transcriptionOverride?: string): Promise<string> => {
     const generatedTranscription = transcriptionOverride ?? transcription
-    const textToTranslate = tabIndex === 3 ? userEnteredText : generatedTranscription
+    const textToTranslate = isTextToSpeechTabActive ? userEnteredText : generatedTranscription
     if (!textToTranslate) {
       return ''
     }
@@ -161,7 +176,7 @@ const App = (): React.ReactElement => {
     )
     setTranslatedText(translation)
 
-    if (tabIndex === 3 && !debugMode) {
+    if (isTextToSpeechTabActive && !debugMode) {
       await handleTextToSpeech(translation)
     }
 
@@ -196,7 +211,7 @@ const App = (): React.ReactElement => {
     console.log('Setting debug mode to:', event.target.checked)
     setDebugMode(event.target.checked)
 
-    window.resizeTo(900, event.target.checked ? 850 : 700)
+    window.resizeTo(WINDOW_WIDTH, event.target.checked ? WINDOW_HEIGHT_DEBUG_MODE : WINDOW_HEIGHT)
   }
 
   const handleOnTabChange = (index: number): void => {
@@ -326,7 +341,7 @@ const App = (): React.ReactElement => {
       </TabPanels>
 
       <Stack maxW={'500px'} mx={'auto'}>
-        {tabIndex !== 3 && (
+        {!isTextToSpeechTabActive && (
           <>
             <Box mb={4}>
               <AudioPlayer url={originalAudioUrl} type={'audio/wav'} />
@@ -342,9 +357,9 @@ const App = (): React.ReactElement => {
           </>
         )}
 
-        <Stack mt={debugMode || tabIndex === 3 ? 4 : 0}>
+        <Stack mt={debugMode || isTextToSpeechTabActive ? 4 : 0}>
           <Flex>
-            {(debugMode || tabIndex === 3) && (
+            {(debugMode || isTextToSpeechTabActive) && (
               <>
                 <LanguageDropdown value={outputLanguage} onChange={handleOnOutputLanguageChange} />
                 <Button w={'50%'} onClick={() => handleTranslatingText()}>
