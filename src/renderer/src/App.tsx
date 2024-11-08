@@ -148,23 +148,22 @@ const App = (): React.ReactElement => {
   }
 
   const handleTranslatingText = async (transcriptionOverride?: string): Promise<string> => {
-    const transcribedText = transcriptionOverride ?? transcription
-
-    if (!transcribedText && userEnteredText === '') {
+    const generatedTranscription = transcriptionOverride ?? transcription
+    const textToTranslate = tabIndex === 3 ? userEnteredText : generatedTranscription
+    if (!textToTranslate) {
       return ''
     }
 
-    let translation: string
-    if (tabIndex !== 3) {
-      translation = await window.api.translateText(transcribedText, outputLanguage, inputLanguage)
-    } else {
-      translation = await window.api.translateText(userEnteredText, outputLanguage, inputLanguage)
-      if (!debugMode) {
-        await handleTextToSpeech(translation)
-      }
-    }
-
+    const translation = await window.api.translateText(
+      textToTranslate,
+      outputLanguage,
+      inputLanguage
+    )
     setTranslatedText(translation)
+
+    if (tabIndex === 3 && !debugMode) {
+      await handleTextToSpeech(translation)
+    }
 
     return translation
   }
