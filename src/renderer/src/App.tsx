@@ -197,11 +197,7 @@ const App = (): React.ReactElement => {
     console.log('Setting debug mode to:', event.target.checked)
     setDebugMode(event.target.checked)
 
-    if (event.target.checked) {
-      window.resizeTo(900, 850)
-    } else {
-      window.resizeTo(900, 700)
-    }
+    window.resizeTo(900, event.target.checked ? 850 : 700)
   }
 
   const handleOnTabChange = (index: number): void => {
