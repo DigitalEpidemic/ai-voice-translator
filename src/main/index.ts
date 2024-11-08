@@ -200,10 +200,11 @@ ipcMain.handle(
   'text-to-speech',
   async (_, text: string, language: AvailableLanguages): Promise<Uint8Array> => {
     console.log('Generating audio...')
+    const defaultVoiceId = 'bIHbv24MWmeRgasZH58o' // Premade voice for Will
 
     try {
       const audioStream = await elevenLabsClient.generate({
-        voice: 'LHEmo0XNW9f1ptZLyVTV', // My voice ID
+        voice: process.env.VITE_ELEVENLABS_VOICE_ID ?? defaultVoiceId, // TODO: Get endpoint and list all voices in a dropdown
         model_id: 'eleven_turbo_v2_5',
         text
       })
