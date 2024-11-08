@@ -1,17 +1,17 @@
+import { AvailableLanguageCodes, AvailableLanguages, languages } from '@/types/languageTypes'
 import { createClient } from '@deepgram/sdk'
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
+import { AssemblyAI } from 'assemblyai'
 import dotenv from 'dotenv'
 import { app, BrowserWindow, ipcMain, shell } from 'electron'
 import { ElevenLabsClient } from 'elevenlabs'
+import ffmpeg from 'fluent-ffmpeg'
 import fs from 'fs'
 import path, { join } from 'path'
 import { Readable } from 'stream'
 import translate from 'translate'
 import { v4 as uuid } from 'uuid'
 import icon from '../../resources/icon.png?asset'
-import ffmpeg from 'fluent-ffmpeg'
-import { AvailableLanguageCodes, AvailableLanguages, languages } from '@/types/languageTypes'
-import { AssemblyAI } from 'assemblyai'
 
 dotenv.config()
 
