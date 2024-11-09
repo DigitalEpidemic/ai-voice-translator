@@ -12,6 +12,7 @@ import { Readable } from 'stream'
 import translate from 'translate'
 import { v4 as uuid } from 'uuid'
 import icon from '../../resources/icon.png?asset'
+import { GetSpeechHistoryResponse } from 'elevenlabs/api'
 
 dotenv.config()
 
@@ -29,8 +30,8 @@ function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     title: 'AI Voice Translator',
-    width: 900,
-    height: 700,
+    width: 750,
+    height: 670,
     show: false,
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon } : {}),
@@ -234,6 +235,17 @@ ipcMain.handle(
     }
   }
 )
+
+ipcMain.handle('get-history', async (): Promise<GetSpeechHistoryResponse | null> => {
+  try {
+    console.log('Fetching history...')
+    const history = await elevenLabsClient.history.getAll()
+    return history
+  } catch (error) {
+    console.error('Error getting history:', error)
+    return null
+  }
+})
 
 const streamToBuffer = (stream: Readable): Promise<Buffer> => {
   return new Promise((resolve, reject) => {

@@ -17,21 +17,26 @@ import {
   Text,
   Textarea
 } from '@chakra-ui/react'
-import React, { useState } from 'react'
+import { GetSpeechHistoryResponse } from 'elevenlabs/api'
+import React, { useEffect, useState } from 'react'
+import { MdHistory } from 'react-icons/md'
 import WavEncoder from 'wav-encoder'
 import { AudioPlayer } from './components/AudioPlayer'
 import { FileUploadButton } from './components/FileUpload'
+import { HistoryItem } from './components/HistoryItem'
 import { LanguageDropdown } from './components/LanguageDropdown'
 import { LanguageDropdowns } from './components/LanguageDropdowns'
 
-const WINDOW_WIDTH = 900
-const WINDOW_HEIGHT = 700
-const WINDOW_HEIGHT_DEBUG_MODE = 850
+const WINDOW_WIDTH = 750
+const WINDOW_HEIGHT = 670
+const WINDOW_HEIGHT_DEBUG_MODE = 825
+const MAX_CONTENT_WIDTH = '550px'
 const TAB_INDEXES = {
   SpeechToText: 0,
   TranslateFile: 1,
   TranslateURL: 2,
-  TextToSpeech: 3
+  TextToSpeech: 3,
+  History: 4
 }
 const TAGALOG_LANGUAGE = languages[0]
 const ENGLISH_LANGUAGE = languages[6]
@@ -54,7 +59,23 @@ const App = (): React.ReactElement => {
   const [debugMode, setDebugMode] = useState(false)
   const [inputLanguage, setInputLanguage] = useState<AvailableLanguageCodes>(ENGLISH_LANGUAGE.code)
   const [userEnteredURL, setUserEnteredURL] = useState('')
+  const [historyList, setHistoryList] = useState<GetSpeechHistoryResponse | null>(null)
+
   const isTextToSpeechTabActive = tabIndex === TAB_INDEXES.TextToSpeech
+  const isHistoryTabActive = tabIndex === TAB_INDEXES.History
+
+  useEffect(() => {
+    if (!isHistoryTabActive || historyList) {
+      return
+    }
+
+    const fetchHistoryList = async (): Promise<void> => {
+      console.log('Fetching history useEffect...')
+      const history = await window.api.getHistory()
+      setHistoryList(history)
+    }
+    fetchHistoryList()
+  }, [tabIndex])
 
   const handleAudioFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -261,8 +282,21 @@ const App = (): React.ReactElement => {
   }
 
   return (
-    <Tabs onChange={handleOnTabChange} isFitted variant={'enclosed-colored'} w={'100vw'}>
+    <Tabs
+      index={tabIndex}
+      onChange={handleOnTabChange}
+      isFitted
+      variant={'enclosed-colored'}
+      w={'100vw'}
+      h={'100vh'}
+      display="flex"
+      flexDirection="column"
+    >
       <Flex p={2} justifyContent={'space-between'} alignItems={'center'} position={'relative'}>
+        <Button variant={tabIndex === TAB_INDEXES.History ? 'solid' : 'ghost'}>
+          <MdHistory size={24} onClick={() => setTabIndex(4)} />
+        </Button>
+
         <Flex position={'absolute'} left={'50%'} transform={'translateX(-50%)'}>
           <Heading size={'lg'} my={2} textAlign={'center'}>
             AI Voice Translator
@@ -281,9 +315,9 @@ const App = (): React.ReactElement => {
         <Tab>Translate URL</Tab>
         <Tab>Text-to-Speech</Tab>
       </TabList>
-      <TabPanels>
+      <TabPanels overflowY="auto" maxH="100%">
         <TabPanel>
-          <Stack maxW={'500px'} mx={'auto'}>
+          <Stack maxW={MAX_CONTENT_WIDTH} mx={'auto'}>
             {renderLanguageDropdowns()}
             <Text>Record Microphone:</Text>
             <HStack w={'100%'} justifyContent={'center'}>
@@ -301,28 +335,32 @@ const App = (): React.ReactElement => {
           </Stack>
         </TabPanel>
         <TabPanel>
-          <Stack maxW={'500px'} mx={'auto'}>
+          <Stack maxW={MAX_CONTENT_WIDTH} mx={'auto'}>
             {renderLanguageDropdowns()}
             <Text>Upload Existing Audio File:</Text>
             <FileUploadButton buttonText="Upload File" onChange={handleAudioFileUpload} />
           </Stack>
         </TabPanel>
         <TabPanel>
-          <Stack maxW={'500px'} mx={'auto'}>
+          <Stack maxW={MAX_CONTENT_WIDTH} mx={'auto'}>
             {renderLanguageDropdowns()}
             <Flex flexDir={'column'} flexGrow={1}>
               <Text>Audio URL:</Text>
-              <Input
-                value={userEnteredURL}
-                onChange={(event) => setUserEnteredURL(event.target.value)}
-                placeholder="Enter URL here..."
-              />
+              <Flex>
+                <Input
+                  value={userEnteredURL}
+                  onChange={(event) => setUserEnteredURL(event.target.value)}
+                  placeholder="Enter URL here..."
+                />
+                <Button w={'30%'} onClick={() => handleURLSubmission()}>
+                  Submit URL
+                </Button>
+              </Flex>
             </Flex>
-            <Button onClick={() => handleURLSubmission()}>Submit URL</Button>
           </Stack>
         </TabPanel>
         <TabPanel>
-          <Stack maxW={'500px'} mx={'auto'}>
+          <Stack maxW={MAX_CONTENT_WIDTH} mx={'auto'}>
             <LanguageDropdown
               label={'Input Language'}
               value={inputLanguage}
@@ -338,49 +376,61 @@ const App = (): React.ReactElement => {
             </Flex>
           </Stack>
         </TabPanel>
+        <TabPanel>
+          {historyList?.history?.map((history) => (
+            <HistoryItem key={history.history_item_id} history={history} />
+          ))}
+        </TabPanel>
       </TabPanels>
 
-      <Stack maxW={'500px'} mx={'auto'}>
-        {!isTextToSpeechTabActive && (
-          <>
-            <Box mb={4}>
-              <AudioPlayer url={originalAudioUrl} type={'audio/wav'} />
-            </Box>
-            {debugMode && (
-              <Button onClick={() => transcribeAudioInArrayBuffer()}>Transcribe</Button>
-            )}
+      {!isHistoryTabActive && (
+        <Stack maxW={MAX_CONTENT_WIDTH} w={'100%'} mx={'auto'}>
+          {!isTextToSpeechTabActive && (
+            <>
+              <Box mb={4}>
+                <AudioPlayer url={originalAudioUrl} type={'audio/wav'} />
+              </Box>
+              {debugMode && (
+                <Button onClick={() => transcribeAudioInArrayBuffer()}>Transcribe</Button>
+              )}
+              <Textarea
+                value={transcription}
+                onChange={(e) => setTranscription(e.target.value)}
+                placeholder="Transcribed text goes here..."
+              />
+            </>
+          )}
+
+          <Stack mt={debugMode || isTextToSpeechTabActive ? 4 : 0}>
+            <Flex>
+              {(debugMode || isTextToSpeechTabActive) && (
+                <>
+                  <LanguageDropdown
+                    value={outputLanguage}
+                    onChange={handleOnOutputLanguageChange}
+                  />
+                  <Button w={'50%'} onClick={() => handleTranslatingText()}>
+                    Translate
+                  </Button>
+                </>
+              )}
+            </Flex>
             <Textarea
-              value={transcription}
-              onChange={(e) => setTranscription(e.target.value)}
-              placeholder="Transcribed text goes here..."
+              value={translatedText}
+              onChange={(e) => setTranslatedText(e.target.value)}
+              placeholder="Translated text goes here..."
             />
-          </>
-        )}
+          </Stack>
 
-        <Stack mt={debugMode || isTextToSpeechTabActive ? 4 : 0}>
-          <Flex>
-            {(debugMode || isTextToSpeechTabActive) && (
-              <>
-                <LanguageDropdown value={outputLanguage} onChange={handleOnOutputLanguageChange} />
-                <Button w={'50%'} onClick={() => handleTranslatingText()}>
-                  Translate
-                </Button>
-              </>
+          <Stack>
+            {debugMode && (
+              <Button onClick={() => handleTextToSpeech()}>Generate AI Voice 🤖</Button>
             )}
-          </Flex>
-          <Textarea
-            value={translatedText}
-            onChange={(e) => setTranslatedText(e.target.value)}
-            placeholder="Translated text goes here..."
-          />
+            <Text>Translated Audio:</Text>
+            <AudioPlayer url={translatedAudioUrl} autoplay type={'audio/mp3'} />
+          </Stack>
         </Stack>
-
-        <Stack>
-          {debugMode && <Button onClick={() => handleTextToSpeech()}>Generate AI Voice 🤖</Button>}
-          <Text>Translated Audio:</Text>
-          <AudioPlayer url={translatedAudioUrl} autoplay type={'audio/mp3'} />
-        </Stack>
-      </Stack>
+      )}
     </Tabs>
   )
 }

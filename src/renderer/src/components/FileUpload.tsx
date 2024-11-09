@@ -7,7 +7,7 @@ interface FileUploadProps {
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void
 }
 
-export const FileUploadButton = ({ buttonText, onChange }: FileUploadProps) => {
+export const FileUploadButton = ({ buttonText, onChange }: FileUploadProps): React.ReactElement => {
   const [fileName, setFileName] = React.useState<string>()
 
   const handleOnChange = (event: React.ChangeEvent<HTMLInputElement>): void => {

@@ -17,6 +17,7 @@ declare global {
       ) => Promise<string>
       textToSpeech: (text: string, language: AvailableLanguages) => Promise<Uint8Array>
       saveAudioURL: (url: string) => Promise<Uint8Array>
+      getHistory: () => Promise<GetSpeechHistoryResponse | null>
     }
   }
 }
