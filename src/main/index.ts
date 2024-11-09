@@ -251,14 +251,13 @@ ipcMain.handle('download-history-audio', async (_, historyId: string, saveFile: 
   console.log('Downloading history audio...')
   try {
     const audioStream = await elevenLabsClient.history.getAudio(historyId)
+    const intArray = await readableStreamToUint8Array(audioStream)
 
     if (saveFile) {
       const appDirectory = app.getAppPath()
       const tempMp3FilePath = path.join(appDirectory, `download-${historyId}.mp3`)
-      const intArray = await saveAudioStreamToMp3FileAndReturnAudioData(
-        audioStream,
-        tempMp3FilePath
-      )
+
+      saveAudioBufferToFilePath(tempMp3FilePath, intArray)
 
       const wavFilePath = path.join(appDirectory, `download-${historyId}.wav`)
       await convertMp3ToWav(tempMp3FilePath, wavFilePath)
@@ -268,13 +267,9 @@ ipcMain.handle('download-history-audio', async (_, historyId: string, saveFile: 
           console.error('Failed to delete temp MP3 file:', err)
         }
       })
-      return intArray
-    } else {
-      const readableStream = Readable.from(audioStream)
-      const buffer = await streamToBuffer(readableStream)
-      const intArray = new Uint8Array(buffer)
-      return intArray
     }
+
+    return intArray
   } catch (error) {
     console.log('Error downloading history audio:', error)
     throw new Error('Downloading history audio failed')
@@ -304,12 +299,16 @@ const saveAudioStreamToMp3FileAndReturnAudioData = async (
   audioStream: Readable,
   tempMp3FilePath: string
 ): Promise<Uint8Array> => {
-  const readableStream = Readable.from(audioStream)
-  const buffer = await streamToBuffer(readableStream)
-  const intArray = new Uint8Array(buffer)
-
+  const intArray = await readableStreamToUint8Array(audioStream)
   saveAudioBufferToFilePath(tempMp3FilePath, intArray)
+
   return intArray
+}
+
+const readableStreamToUint8Array = async (readableStream: Readable): Promise<Uint8Array> => {
+  const stream = Readable.from(readableStream)
+  const buffer = await streamToBuffer(stream)
+  return new Uint8Array(buffer)
 }
 
 const convertMp3ToWav = async (tempFilePath: string, wavFilePath: string): Promise<void> => {
