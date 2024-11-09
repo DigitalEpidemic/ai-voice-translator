@@ -1,4 +1,4 @@
-import { Flex, Button, Box, Text } from '@chakra-ui/react'
+import { Box, Button, Flex, Text } from '@chakra-ui/react'
 import { SpeechHistoryItemResponse } from 'elevenlabs/api'
 import { MdOutlineFileDownload } from 'react-icons/md'
 
@@ -11,10 +11,15 @@ const convertUnixTimestampToReadableDate = (unixTimestamp: number): string => {
 }
 
 export const HistoryItem = ({ history }: HistoryItemProps): JSX.Element => {
+  const handleDownload = (): void => {
+    console.log('Downloading audio file from history...')
+    window.api.downloadHistoryAudio(history.history_item_id)
+  }
+
   return (
     <Flex key={history.history_item_id} alignItems={'center'}>
       <Flex>
-        <Button w={10} h={10} p={0} mr={2} variant={'ghost'}>
+        <Button w={10} h={10} p={0} mr={2} variant={'ghost'} onClick={handleDownload}>
           <MdOutlineFileDownload size={24} />
         </Button>
       </Flex>
