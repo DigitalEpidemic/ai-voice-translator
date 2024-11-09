@@ -42,8 +42,13 @@ export const HistoryItemList = ({ historyList }: HistoryItemListProps): JSX.Elem
 
   return (
     <>
-      {historyList?.map((history) => (
-        <Flex key={history.history_item_id} alignItems={'center'}>
+      {historyList?.map((history, index) => (
+        <Flex
+          key={history.history_item_id}
+          alignItems={'center'}
+          mt={index === 0 ? 0 : 4}
+          mb={index === historyList.length - 1 ? 0 : 4}
+        >
           <Flex flexDirection={'column'}>
             <Button
               w={8}
@@ -67,7 +72,7 @@ export const HistoryItemList = ({ historyList }: HistoryItemListProps): JSX.Elem
               <MdOutlineFileDownload size={24} />
             </Button>
           </Flex>
-          <Box pb={3}>
+          <Box>
             <Flex>
               <Text as={'b'} fontSize={'sm'} pr={2}>
                 {history.voice_name}

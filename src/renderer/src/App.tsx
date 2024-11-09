@@ -23,7 +23,7 @@ import { MdHistory } from 'react-icons/md'
 import WavEncoder from 'wav-encoder'
 import { AudioPlayer } from './components/AudioPlayer'
 import { FileUploadButton } from './components/FileUpload'
-import { HistoryItemList } from './components/HistoryItem'
+import { HistoryItemList } from './components/HistoryItemList'
 import { LanguageDropdown } from './components/LanguageDropdown'
 import { LanguageDropdowns } from './components/LanguageDropdowns'
 
