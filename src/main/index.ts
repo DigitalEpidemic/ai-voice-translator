@@ -252,14 +252,13 @@ ipcMain.handle('download-history-audio', async (_, historyId: string, saveFile: 
   try {
     const audioStream = await elevenLabsClient.history.getAudio(historyId)
 
-    const readableStream = Readable.from(audioStream)
-    const buffer = await streamToBuffer(readableStream)
-    const intArray = new Uint8Array(buffer)
-
     if (saveFile) {
       const appDirectory = app.getAppPath()
       const tempMp3FilePath = path.join(appDirectory, `download-${historyId}.mp3`)
-      await saveAudioStreamToMp3FileAndReturnAudioData(audioStream, tempMp3FilePath)
+      const intArray = await saveAudioStreamToMp3FileAndReturnAudioData(
+        audioStream,
+        tempMp3FilePath
+      )
 
       const wavFilePath = path.join(appDirectory, `download-${historyId}.wav`)
       await convertMp3ToWav(tempMp3FilePath, wavFilePath)
@@ -269,9 +268,13 @@ ipcMain.handle('download-history-audio', async (_, historyId: string, saveFile: 
           console.error('Failed to delete temp MP3 file:', err)
         }
       })
+      return intArray
+    } else {
+      const readableStream = Readable.from(audioStream)
+      const buffer = await streamToBuffer(readableStream)
+      const intArray = new Uint8Array(buffer)
+      return intArray
     }
-
-    return intArray
   } catch (error) {
     console.log('Error downloading history audio:', error)
     throw new Error('Downloading history audio failed')
