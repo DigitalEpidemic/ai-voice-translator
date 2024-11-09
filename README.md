@@ -1,6 +1,7 @@
 # AI Voice Translator
 
 A voice translator and transcriber app created in Electron with React and TypeScript
+![image](https://github.com/user-attachments/assets/3ac84c1c-440d-4fae-b652-a565d76c7a68)
 
 # Features
 **Note: You must setup Voice Cloning to translate your own voice into any of the 32 supported languages).**
