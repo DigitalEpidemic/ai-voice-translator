@@ -19,8 +19,8 @@ const api = {
     ipcRenderer.invoke('text-to-speech', text, language),
   saveAudioURL: (url: string): Promise<Uint8Array> => ipcRenderer.invoke('save-audio-url', url),
   getHistory: (): Promise<GetSpeechHistoryResponse | null> => ipcRenderer.invoke('get-history'),
-  downloadHistoryAudio: (historyId: string): void =>
-    ipcRenderer.send('download-history-audio', historyId)
+  downloadHistoryAudio: (historyId: string, saveFile?: boolean): Promise<Uint8Array> =>
+    ipcRenderer.invoke('download-history-audio', historyId, saveFile)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

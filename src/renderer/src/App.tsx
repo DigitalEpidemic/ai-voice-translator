@@ -23,7 +23,7 @@ import { MdHistory } from 'react-icons/md'
 import WavEncoder from 'wav-encoder'
 import { AudioPlayer } from './components/AudioPlayer'
 import { FileUploadButton } from './components/FileUpload'
-import { HistoryItem } from './components/HistoryItem'
+import { HistoryItemList } from './components/HistoryItem'
 import { LanguageDropdown } from './components/LanguageDropdown'
 import { LanguageDropdowns } from './components/LanguageDropdowns'
 
@@ -377,9 +377,7 @@ const App = (): React.ReactElement => {
           </Stack>
         </TabPanel>
         <TabPanel>
-          {historyList?.history?.map((history) => (
-            <HistoryItem key={history.history_item_id} history={history} />
-          ))}
+          <HistoryItemList historyList={historyList?.history} />
         </TabPanel>
       </TabPanels>
 

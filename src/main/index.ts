@@ -247,25 +247,34 @@ ipcMain.handle('get-history', async (): Promise<GetSpeechHistoryResponse | null>
   }
 })
 
-ipcMain.on('download-history-audio', async (_, historyId: string) => {
+ipcMain.handle('download-history-audio', async (_, historyId: string, saveFile: boolean = true) => {
   console.log('Downloading history audio...')
   try {
     const audioStream = await elevenLabsClient.history.getAudio(historyId)
 
-    const appDirectory = app.getAppPath()
-    const tempMp3FilePath = path.join(appDirectory, `download-${historyId}.mp3`)
-    await saveAudioStreamToMp3FileAndReturnAudioData(audioStream, tempMp3FilePath)
+    const readableStream = Readable.from(audioStream)
+    const buffer = await streamToBuffer(readableStream)
+    const intArray = new Uint8Array(buffer)
 
-    const wavFilePath = path.join(appDirectory, `download-${historyId}.wav`)
-    await convertMp3ToWav(tempMp3FilePath, wavFilePath)
+    if (saveFile) {
+      const appDirectory = app.getAppPath()
+      const tempMp3FilePath = path.join(appDirectory, `download-${historyId}.mp3`)
+      await saveAudioStreamToMp3FileAndReturnAudioData(audioStream, tempMp3FilePath)
 
-    fs.unlink(tempMp3FilePath, (err) => {
-      if (err) {
-        console.error('Failed to delete temp MP3 file:', err)
-      }
-    })
+      const wavFilePath = path.join(appDirectory, `download-${historyId}.wav`)
+      await convertMp3ToWav(tempMp3FilePath, wavFilePath)
+
+      fs.unlink(tempMp3FilePath, (err) => {
+        if (err) {
+          console.error('Failed to delete temp MP3 file:', err)
+        }
+      })
+    }
+
+    return intArray
   } catch (error) {
     console.log('Error downloading history audio:', error)
+    throw new Error('Downloading history audio failed')
   }
 })
 
