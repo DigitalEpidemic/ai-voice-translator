@@ -60,18 +60,23 @@ const App = (): React.ReactElement => {
   const [inputLanguage, setInputLanguage] = useState<AvailableLanguageCodes>(ENGLISH_LANGUAGE.code)
   const [userEnteredURL, setUserEnteredURL] = useState('')
   const [historyList, setHistoryList] = useState<GetSpeechHistoryResponse | null>(null)
+  const [shouldRefetchHistory, setShouldRefetchHistory] = useState(true)
 
   const isTextToSpeechTabActive = tabIndex === TAB_INDEXES.TextToSpeech
   const isHistoryTabActive = tabIndex === TAB_INDEXES.History
 
   useEffect(() => {
-    if (!isHistoryTabActive || historyList) {
+    const isOnHistoryTabAndShouldRefetch =
+      isHistoryTabActive && (shouldRefetchHistory || !historyList)
+
+    if (!isOnHistoryTabAndShouldRefetch) {
       return
     }
 
     const fetchHistoryList = async (): Promise<void> => {
       console.log('Fetching history useEffect...')
       const history = await window.api.getHistory()
+      setShouldRefetchHistory(false)
       setHistoryList(history)
     }
     fetchHistoryList()
@@ -213,6 +218,7 @@ const App = (): React.ReactElement => {
     }
 
     const arrayBuffer = await window.api.textToSpeech(textToGenerate, currentLanguage.name)
+    setShouldRefetchHistory(true)
     const blob = new Blob([arrayBuffer], { type: 'audio/mpeg' })
     const url = URL.createObjectURL(blob)
     setTranslatedAudioUrl(url)
