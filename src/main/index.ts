@@ -285,6 +285,13 @@ const streamToBuffer = (stream: Readable): Promise<Buffer> => {
 }
 
 const saveAudioBufferToFilePath = (filePath: string, buffer: Uint8Array): void => {
+  const dir = path.dirname(filePath)
+
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true })
+    console.log(`Directory created: ${dir}`)
+  }
+
   fs.writeFile(filePath, buffer, (err) => {
     if (err) {
       console.error('Failed to save audio file:', err)
