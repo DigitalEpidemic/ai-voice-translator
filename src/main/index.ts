@@ -5,14 +5,13 @@ import { AssemblyAI } from 'assemblyai'
 import dotenv from 'dotenv'
 import { app, BrowserWindow, ipcMain, shell } from 'electron'
 import { ElevenLabsClient } from 'elevenlabs'
+import { GetSpeechHistoryResponse } from 'elevenlabs/api'
 import ffmpeg from 'fluent-ffmpeg'
 import fs from 'fs'
 import path, { join } from 'path'
 import { Readable } from 'stream'
 import translate from 'translate'
-import { v4 as uuid } from 'uuid'
 import icon from '../../resources/icon.png?asset'
-import { GetSpeechHistoryResponse } from 'elevenlabs/api'
 
 dotenv.config()
 
@@ -138,8 +137,8 @@ ipcMain.handle(
   }
 )
 
-ipcMain.on('save-audio', (_, wavBuffer: Uint8Array) => {
-  const fileName = `recording-${uuid()}.wav`
+ipcMain.on('save-audio', async (_, wavBuffer: Uint8Array) => {
+  const fileName = `recording-${await generateUUID()}.wav`
   const filePath = getAudioDirectoryWithFileName('Recorded', fileName)
 
   saveAudioBufferToFilePath(filePath, wavBuffer)
@@ -154,7 +153,7 @@ ipcMain.handle('save-audio-url', async (_, url: string): Promise<Uint8Array> => 
   const arrayBuffer = await response.arrayBuffer()
   const uint8Array = new Uint8Array(arrayBuffer)
 
-  const fileName = `url-${uuid()}.wav`
+  const fileName = `url-${await generateUUID()}.wav`
   const filePath = getAudioDirectoryWithFileName('URL', fileName)
 
   saveAudioBufferToFilePath(filePath, uint8Array)
@@ -203,7 +202,7 @@ ipcMain.handle(
         text
       })
 
-      const generatedFileName = uuid()
+      const generatedFileName = await generateUUID()
       const tempMp3FilePath = getAudioDirectoryWithFileName(
         'Generated',
         `${language}-${generatedFileName}.mp3`
@@ -338,4 +337,9 @@ const getAudioDirectoryWithFileName = (directoryName: string, fileName: string):
   const nestedDirectory = path.join(audioDirectory, directoryName)
   const filePath = path.join(nestedDirectory, fileName)
   return filePath
+}
+
+const generateUUID = async (): Promise<string> => {
+  const { nanoid } = await import('nanoid')
+  return nanoid()
 }
