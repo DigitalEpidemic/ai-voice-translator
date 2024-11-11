@@ -7,16 +7,16 @@ A voice translator and transcriber app created in Electron with React and TypeSc
 
 **Note: You must setup Voice Cloning to translate your own voice into any of the 32 supported languages).**
 
-- Speech-To-Speech:
+- **Speech-To-Speech**
   - Select your `Input Language` and `Output Language`
   - `Start Recording` from your microphone and once you `Stop Recording`, it will transcribe whatever you said, translate to the language of your choice, then output the translated voice.
-- Translate File
+- **Translate File**
   - Select your `Input Language` and `Output Language`
   - `Upload File` locally, then it will also transcribe, translate, then output the translated voice.
-- Translate URL
+- **Translate URL**
   - Select your `Input Language` and `Output Language`
   - Enter the `Audio URL`, then click `Submit URL` and it will also transcribe, translate, then output the translated voice.
-- Text-To-Speech
+- **Text-To-Speech**
   - Select your `Input Language` and `Output Language`
   - Enter any `Text To Be Translated` in the input, click `Translate` and it will translate, then output the translated voice.
 
@@ -29,12 +29,14 @@ A voice translator and transcriber app created in Electron with React and TypeSc
 
 ### API Keys
 
+You will need to make an account and get an API for the following:
+
 - **Deepgram**
   - Link: https://deepgram.com/
   - Tier: **Free** (Includes $200 of credit)
-- **AssemblyAI** (Free $50 of credit)
+- **AssemblyAI**
   - Link: https://www.assemblyai.com/
-  - Tier: **Free** (Includes $200 of credit)
+  - Tier: **Free** (Includes $50 of credit)
 - **ElevenLabs**
   - Link: https://elevenlabs.io/
   - Tier: **Starter** or higher for Voice Cloning ($5 USD/month). **Free** (10k credits) for generic voice generation
@@ -46,12 +48,12 @@ A voice translator and transcriber app created in Electron with React and TypeSc
 cp .env.example .env
 ```
 
-Then fill in the following API Keys:
+Then populate the following API Keys in your `.env` file:
 
 - `VITE_DEEPGRAM_API_KEY`
 - `VITE_ASSEMBLYAI_API_KEY`
 - `VITE_ELEVENLABS_API_KEY`
-- `VITE_ELEVENLABS_VOICE_ID`
+- `VITE_ELEVENLABS_VOICE_ID` (Use one your IDs from [ElevenLabs Voice Lab](https://elevenlabs.io/app/voice-lab) or it will default to Will)
 
 ### Install
 
