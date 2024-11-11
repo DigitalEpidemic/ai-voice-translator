@@ -1,10 +1,12 @@
 # AI Voice Translator
 
 A voice translator and transcriber app created in Electron with React and TypeScript
-![image](https://github.com/user-attachments/assets/16ec610a-023d-4a34-b8df-6fad88bf520a)
+![image](https://github.com/user-attachments/assets/0cb9ff66-5071-4def-ac95-f9a412a9e8fb)
 
 # Features
+
 **Note: You must setup Voice Cloning to translate your own voice into any of the 32 supported languages).**
+
 - Speech-To-Speech:
   - Select your `Input Language` and `Output Language`
   - `Start Recording` from your microphone and once you `Stop Recording`, it will transcribe whatever you said, translate to the language of your choice, then output the translated voice.
@@ -26,8 +28,9 @@ A voice translator and transcriber app created in Electron with React and TypeSc
 ## Project Setup
 
 ### API Keys
+
 - **Deepgram**
-  - Link: https://deepgram.com/ 
+  - Link: https://deepgram.com/
   - Tier: **Free** (Includes $200 of credit)
 - **AssemblyAI** (Free $50 of credit)
   - Link: https://www.assemblyai.com/
@@ -36,16 +39,19 @@ A voice translator and transcriber app created in Electron with React and TypeSc
   - Link: https://elevenlabs.io/
   - Tier: **Starter** or higher for Voice Cloning ($5 USD/month). **Free** (10k credits) for generic voice generation
   - Note: You will need to copy your Voice ID for the .env variable if you do clone or want a different voice
- 
+
 ### .env Setup
+
 ```bash
 cp .env.example .env
 ```
+
 Then fill in the following API Keys:
-  - `VITE_DEEPGRAM_API_KEY`
-  - `VITE_ASSEMBLYAI_API_KEY`
-  - `VITE_ELEVENLABS_API_KEY`
-  - `VITE_ELEVENLABS_VOICE_ID`
+
+- `VITE_DEEPGRAM_API_KEY`
+- `VITE_ASSEMBLYAI_API_KEY`
+- `VITE_ELEVENLABS_API_KEY`
+- `VITE_ELEVENLABS_VOICE_ID`
 
 ### Install
 
