@@ -13,14 +13,26 @@ const convertUnixTimestampToReadableDate = (unixTimestamp: number): string => {
 
 export const HistoryItemList = ({ historyList }: HistoryItemListProps): JSX.Element => {
   const [isPlaying, setIsPlaying] = useState(false)
+  const [downloadingIds, setDownloadingIds] = useState<Set<string>>(new Set())
+
   const toast = useToast()
 
   const handleDownload = async (history: SpeechHistoryItemResponse): Promise<void> => {
+    if (downloadingIds.has(history.history_item_id)) {
+      return
+    }
+
     const toastId = toast({
       description: 'Downloading audio file from history...'
     })
 
+    setDownloadingIds((prev) => new Set(prev).add(history.history_item_id))
     await window.api.downloadHistoryAudio(history.history_item_id)
+    setDownloadingIds((prev) => {
+      const downloadIds = new Set(prev)
+      downloadIds.delete(history.history_item_id)
+      return downloadIds
+    })
 
     toast.update(toastId, {
       description: `Saved file as 'download-${history.history_item_id}.wav'`
@@ -75,6 +87,7 @@ export const HistoryItemList = ({ historyList }: HistoryItemListProps): JSX.Elem
               mr={2}
               variant={'ghost'}
               onClick={() => handleDownload(history)}
+              isDisabled={downloadingIds.has(history.history_item_id)}
             >
               <MdOutlineFileDownload size={24} />
             </Button>
