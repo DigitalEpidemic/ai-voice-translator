@@ -5,14 +5,13 @@ import { AssemblyAI } from 'assemblyai'
 import dotenv from 'dotenv'
 import { app, BrowserWindow, ipcMain, shell } from 'electron'
 import { ElevenLabsClient } from 'elevenlabs'
+import { GetSpeechHistoryResponse } from 'elevenlabs/api'
 import ffmpeg from 'fluent-ffmpeg'
 import fs from 'fs'
 import path, { join } from 'path'
 import { Readable } from 'stream'
 import translate from 'translate'
-import { v4 as uuid } from 'uuid'
 import icon from '../../resources/icon.png?asset'
-import { GetSpeechHistoryResponse } from 'elevenlabs/api'
 
 dotenv.config()
 
@@ -138,10 +137,9 @@ ipcMain.handle(
   }
 )
 
-ipcMain.on('save-audio', (_, wavBuffer: Uint8Array) => {
-  const filename = `recording-${uuid()}.wav`
-  const appDirectory = app.getAppPath() // Get the current app directory
-  const filePath = path.join(appDirectory, filename) // Specify the file path
+ipcMain.on('save-audio', async (_, wavBuffer: Uint8Array) => {
+  const fileName = `recording-${await generateUUID()}.wav`
+  const filePath = getAudioDirectoryWithFileName('Recorded', fileName)
 
   saveAudioBufferToFilePath(filePath, wavBuffer)
 })
@@ -155,17 +153,10 @@ ipcMain.handle('save-audio-url', async (_, url: string): Promise<Uint8Array> => 
   const arrayBuffer = await response.arrayBuffer()
   const uint8Array = new Uint8Array(arrayBuffer)
 
-  const filename = `url-${uuid()}.wav`
-  const appDirectory = app.getAppPath()
-  const filePath = path.join(appDirectory, filename)
+  const fileName = `url-${await generateUUID()}.wav`
+  const filePath = getAudioDirectoryWithFileName('URL', fileName)
 
-  fs.writeFile(filePath, uint8Array, (err) => {
-    if (err) {
-      console.error('Error saving file:', err)
-    } else {
-      console.log(`File saved to ${filePath}`)
-    }
-  })
+  saveAudioBufferToFilePath(filePath, uint8Array)
 
   return uint8Array
 })
@@ -211,16 +202,21 @@ ipcMain.handle(
         text
       })
 
-      const generatedFileName = uuid()
-      const appDirectory = app.getAppPath()
+      const generatedFileName = await generateUUID()
+      const tempMp3FilePath = getAudioDirectoryWithFileName(
+        'Generated',
+        `${language}-${generatedFileName}.mp3`
+      )
 
-      const tempMp3FilePath = path.join(appDirectory, `${language}-${generatedFileName}.mp3`)
       const audioData = await saveAudioStreamToMp3FileAndReturnAudioData(
         audioStream,
         tempMp3FilePath
       )
 
-      const wavFilePath = path.join(appDirectory, `${language}-${generatedFileName}.wav`)
+      const wavFilePath = getAudioDirectoryWithFileName(
+        'Generated',
+        `${language}-${generatedFileName}.wav`
+      )
       await convertMp3ToWav(tempMp3FilePath, wavFilePath)
 
       fs.unlink(tempMp3FilePath, (err) => {
@@ -255,12 +251,13 @@ ipcMain.handle('download-history-audio', async (_, historyId: string, saveFile: 
     const intArray = await readableStreamToUint8Array(audioStream)
 
     if (saveFile) {
-      const appDirectory = app.getAppPath()
-      const tempMp3FilePath = path.join(appDirectory, `download-${historyId}.mp3`)
-
+      const tempMp3FilePath = getAudioDirectoryWithFileName(
+        'Downloaded',
+        `download-${historyId}.mp3`
+      )
       saveAudioBufferToFilePath(tempMp3FilePath, intArray)
 
-      const wavFilePath = path.join(appDirectory, `download-${historyId}.wav`)
+      const wavFilePath = getAudioDirectoryWithFileName('Downloaded', `download-${historyId}.wav`)
       await convertMp3ToWav(tempMp3FilePath, wavFilePath)
 
       fs.unlink(tempMp3FilePath, (err) => {
@@ -287,6 +284,13 @@ const streamToBuffer = (stream: Readable): Promise<Buffer> => {
 }
 
 const saveAudioBufferToFilePath = (filePath: string, buffer: Uint8Array): void => {
+  const dir = path.dirname(filePath)
+
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true })
+    console.log(`Directory created: ${dir}`)
+  }
+
   fs.writeFile(filePath, buffer, (err) => {
     if (err) {
       console.error('Failed to save audio file:', err)
@@ -325,4 +329,17 @@ const convertMp3ToWav = async (tempFilePath: string, wavFilePath: string): Promi
       })
       .save(wavFilePath)
   })
+}
+
+const getAudioDirectoryWithFileName = (directoryName: string, fileName: string): string => {
+  const appDirectory = app.getAppPath()
+  const audioDirectory = path.join(appDirectory, 'Audio Files')
+  const nestedDirectory = path.join(audioDirectory, directoryName)
+  const filePath = path.join(nestedDirectory, fileName)
+  return filePath
+}
+
+const generateUUID = async (): Promise<string> => {
+  const { nanoid } = await import('nanoid')
+  return nanoid()
 }
