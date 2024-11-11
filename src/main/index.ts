@@ -98,13 +98,14 @@ app.on('window-all-closed', () => {
 ipcMain.handle(
   'transcribe-audio',
   async (_, uint8Array: Uint8Array, inputLanguage: AvailableLanguageCodes): Promise<string> => {
-    console.log('Transcribing audio...')
     console.log('Input language:', inputLanguage)
 
     const transcriber = languages.find((language) => language.code === inputLanguage)?.transcriber
     console.log('Transcriber:', transcriber)
 
     try {
+      console.log('Transcribing audio...')
+
       if (transcriber === 'deepgram') {
         const audioBuffer = Buffer.from(uint8Array)
         const response = await deepgramClient.listen.prerecorded.transcribeFile(audioBuffer, {
@@ -115,7 +116,7 @@ ipcMain.handle(
 
         if (response.result && response.result.results.channels.length > 0) {
           const transcription = response.result.results.channels[0].alternatives[0]?.transcript
-          console.log('Transcription:', transcription)
+          console.log(` ${transcription}`)
           return transcription
         } else {
           console.error('No transcription available in response:', response)
