@@ -139,9 +139,8 @@ ipcMain.handle(
 )
 
 ipcMain.on('save-audio', (_, wavBuffer: Uint8Array) => {
-  const filename = `recording-${uuid()}.wav`
-  const appDirectory = app.getAppPath() // Get the current app directory
-  const filePath = path.join(appDirectory, filename) // Specify the file path
+  const fileName = `recording-${uuid()}.wav`
+  const filePath = getAudioDirectoryWithFileName('Recorded', fileName)
 
   saveAudioBufferToFilePath(filePath, wavBuffer)
 })
@@ -155,9 +154,8 @@ ipcMain.handle('save-audio-url', async (_, url: string): Promise<Uint8Array> => 
   const arrayBuffer = await response.arrayBuffer()
   const uint8Array = new Uint8Array(arrayBuffer)
 
-  const filename = `url-${uuid()}.wav`
-  const appDirectory = app.getAppPath()
-  const filePath = path.join(appDirectory, filename)
+  const fileName = `url-${uuid()}.wav`
+  const filePath = getAudioDirectoryWithFileName('URL', fileName)
 
   fs.writeFile(filePath, uint8Array, (err) => {
     if (err) {
@@ -212,15 +210,20 @@ ipcMain.handle(
       })
 
       const generatedFileName = uuid()
-      const appDirectory = app.getAppPath()
+      const tempMp3FilePath = getAudioDirectoryWithFileName(
+        'Generated',
+        `${language}-${generatedFileName}.mp3`
+      )
 
-      const tempMp3FilePath = path.join(appDirectory, `${language}-${generatedFileName}.mp3`)
       const audioData = await saveAudioStreamToMp3FileAndReturnAudioData(
         audioStream,
         tempMp3FilePath
       )
 
-      const wavFilePath = path.join(appDirectory, `${language}-${generatedFileName}.wav`)
+      const wavFilePath = getAudioDirectoryWithFileName(
+        'Generated',
+        `${language}-${generatedFileName}.wav`
+      )
       await convertMp3ToWav(tempMp3FilePath, wavFilePath)
 
       fs.unlink(tempMp3FilePath, (err) => {
@@ -255,12 +258,13 @@ ipcMain.handle('download-history-audio', async (_, historyId: string, saveFile: 
     const intArray = await readableStreamToUint8Array(audioStream)
 
     if (saveFile) {
-      const appDirectory = app.getAppPath()
-      const tempMp3FilePath = path.join(appDirectory, `download-${historyId}.mp3`)
-
+      const tempMp3FilePath = getAudioDirectoryWithFileName(
+        'Downloaded',
+        `download-${historyId}.mp3`
+      )
       saveAudioBufferToFilePath(tempMp3FilePath, intArray)
 
-      const wavFilePath = path.join(appDirectory, `download-${historyId}.wav`)
+      const wavFilePath = getAudioDirectoryWithFileName('Downloaded', `download-${historyId}.wav`)
       await convertMp3ToWav(tempMp3FilePath, wavFilePath)
 
       fs.unlink(tempMp3FilePath, (err) => {
@@ -325,4 +329,12 @@ const convertMp3ToWav = async (tempFilePath: string, wavFilePath: string): Promi
       })
       .save(wavFilePath)
   })
+}
+
+const getAudioDirectoryWithFileName = (directoryName: string, fileName: string): string => {
+  const appDirectory = app.getAppPath()
+  const audioDirectory = path.join(appDirectory, 'Audio Files')
+  const nestedDirectory = path.join(audioDirectory, directoryName)
+  const filePath = path.join(nestedDirectory, fileName)
+  return filePath
 }
