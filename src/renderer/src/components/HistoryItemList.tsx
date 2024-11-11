@@ -1,4 +1,4 @@
-import { Box, Button, Flex, Text } from '@chakra-ui/react'
+import { Box, Button, Flex, Text, useToast } from '@chakra-ui/react'
 import { SpeechHistoryItemResponse } from 'elevenlabs/api'
 import { useState } from 'react'
 import { MdOutlineFileDownload, MdOutlinePlayCircle } from 'react-icons/md'
@@ -13,10 +13,18 @@ const convertUnixTimestampToReadableDate = (unixTimestamp: number): string => {
 
 export const HistoryItemList = ({ historyList }: HistoryItemListProps): JSX.Element => {
   const [isPlaying, setIsPlaying] = useState(false)
+  const toast = useToast()
 
   const handleDownload = async (history: SpeechHistoryItemResponse): Promise<void> => {
-    console.log('Downloading audio file from history...')
+    const toastId = toast({
+      description: 'Downloading audio file from history...'
+    })
+
     await window.api.downloadHistoryAudio(history.history_item_id)
+
+    toast.update(toastId, {
+      description: `Saved file as 'download-${history.history_item_id}.wav'`
+    })
   }
 
   const handlePlayAudio = async (history: SpeechHistoryItemResponse): Promise<void> => {
@@ -24,7 +32,6 @@ export const HistoryItemList = ({ historyList }: HistoryItemListProps): JSX.Elem
       return
     }
 
-    console.log('Playing audio file from history...')
     setIsPlaying(true)
 
     const audioBuffer = await window.api.downloadHistoryAudio(history.history_item_id, false)
