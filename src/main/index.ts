@@ -12,6 +12,7 @@ import { Readable } from 'stream'
 import translate from 'translate'
 import { v4 as uuid } from 'uuid'
 import icon from '../../resources/icon.png?asset'
+import { GetSpeechHistoryResponse } from 'elevenlabs/api'
 
 dotenv.config()
 
@@ -29,8 +30,8 @@ function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     title: 'AI Voice Translator',
-    width: 900,
-    height: 700,
+    width: 750,
+    height: 670,
     show: false,
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon } : {}),
@@ -235,6 +236,46 @@ ipcMain.handle(
   }
 )
 
+ipcMain.handle('get-history', async (): Promise<GetSpeechHistoryResponse | null> => {
+  try {
+    console.log('Fetching history...')
+    const history = await elevenLabsClient.history.getAll()
+    return history
+  } catch (error) {
+    console.error('Error getting history:', error)
+    return null
+  }
+})
+
+ipcMain.handle('download-history-audio', async (_, historyId: string, saveFile: boolean = true) => {
+  console.log('Downloading history audio...')
+  try {
+    const audioStream = await elevenLabsClient.history.getAudio(historyId)
+    const intArray = await readableStreamToUint8Array(audioStream)
+
+    if (saveFile) {
+      const appDirectory = app.getAppPath()
+      const tempMp3FilePath = path.join(appDirectory, `download-${historyId}.mp3`)
+
+      saveAudioBufferToFilePath(tempMp3FilePath, intArray)
+
+      const wavFilePath = path.join(appDirectory, `download-${historyId}.wav`)
+      await convertMp3ToWav(tempMp3FilePath, wavFilePath)
+
+      fs.unlink(tempMp3FilePath, (err) => {
+        if (err) {
+          console.error('Failed to delete temp MP3 file:', err)
+        }
+      })
+    }
+
+    return intArray
+  } catch (error) {
+    console.log('Error downloading history audio:', error)
+    throw new Error('Downloading history audio failed')
+  }
+})
+
 const streamToBuffer = (stream: Readable): Promise<Buffer> => {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = []
@@ -258,12 +299,16 @@ const saveAudioStreamToMp3FileAndReturnAudioData = async (
   audioStream: Readable,
   tempMp3FilePath: string
 ): Promise<Uint8Array> => {
-  const readableStream = Readable.from(audioStream)
-  const buffer = await streamToBuffer(readableStream)
-  const intArray = new Uint8Array(buffer)
-
+  const intArray = await readableStreamToUint8Array(audioStream)
   saveAudioBufferToFilePath(tempMp3FilePath, intArray)
+
   return intArray
+}
+
+const readableStreamToUint8Array = async (readableStream: Readable): Promise<Uint8Array> => {
+  const stream = Readable.from(readableStream)
+  const buffer = await streamToBuffer(stream)
+  return new Uint8Array(buffer)
 }
 
 const convertMp3ToWav = async (tempFilePath: string, wavFilePath: string): Promise<void> => {

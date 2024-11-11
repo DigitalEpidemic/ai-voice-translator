@@ -1,6 +1,7 @@
-import { contextBridge, ipcRenderer } from 'electron'
-import { electronAPI } from '@electron-toolkit/preload'
 import { AvailableLanguageCodes, AvailableLanguages } from '@/types/languageTypes'
+import { electronAPI } from '@electron-toolkit/preload'
+import { contextBridge, ipcRenderer } from 'electron'
+import { GetSpeechHistoryResponse } from 'elevenlabs/api'
 
 // Custom APIs for renderer
 const api = {
@@ -16,7 +17,10 @@ const api = {
   ): Promise<string> => ipcRenderer.invoke('translate-text', text, outputLanguage, inputLanguage),
   textToSpeech: (text: string, language: AvailableLanguages): Promise<Uint8Array> =>
     ipcRenderer.invoke('text-to-speech', text, language),
-  saveAudioURL: (url: string): Promise<Uint8Array> => ipcRenderer.invoke('save-audio-url', url)
+  saveAudioURL: (url: string): Promise<Uint8Array> => ipcRenderer.invoke('save-audio-url', url),
+  getHistory: (): Promise<GetSpeechHistoryResponse | null> => ipcRenderer.invoke('get-history'),
+  downloadHistoryAudio: (historyId: string, saveFile?: boolean): Promise<Uint8Array> =>
+    ipcRenderer.invoke('download-history-audio', historyId, saveFile)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to
