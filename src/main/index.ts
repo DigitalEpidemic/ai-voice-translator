@@ -157,13 +157,7 @@ ipcMain.handle('save-audio-url', async (_, url: string): Promise<Uint8Array> => 
   const fileName = `url-${uuid()}.wav`
   const filePath = getAudioDirectoryWithFileName('URL', fileName)
 
-  fs.writeFile(filePath, uint8Array, (err) => {
-    if (err) {
-      console.error('Error saving file:', err)
-    } else {
-      console.log(`File saved to ${filePath}`)
-    }
-  })
+  saveAudioBufferToFilePath(filePath, uint8Array)
 
   return uint8Array
 })
