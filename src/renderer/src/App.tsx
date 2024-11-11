@@ -15,10 +15,12 @@ import {
   TabPanels,
   Tabs,
   Text,
-  Textarea
+  Textarea,
+  ToastId,
+  useToast
 } from '@chakra-ui/react'
 import { GetSpeechHistoryResponse } from 'elevenlabs/api'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { MdHistory } from 'react-icons/md'
 import WavEncoder from 'wav-encoder'
 import { AudioPlayer } from './components/AudioPlayer'
@@ -65,6 +67,9 @@ const App = (): React.ReactElement => {
   const isTextToSpeechTabActive = tabIndex === TAB_INDEXES.TextToSpeech
   const isHistoryTabActive = tabIndex === TAB_INDEXES.History
 
+  const toast = useToast()
+  const toastIdRef = useRef<ToastId>()
+
   useEffect(() => {
     const isOnHistoryTabAndShouldRefetch =
       isHistoryTabActive && (shouldRefetchHistory || !historyList)
@@ -74,10 +79,15 @@ const App = (): React.ReactElement => {
     }
 
     const fetchHistoryList = async (): Promise<void> => {
-      console.log('Fetching history useEffect...')
+      toastIdRef.current = toast({
+        description: 'Fetching history...'
+      })
+
       const history = await window.api.getHistory()
       setShouldRefetchHistory(false)
       setHistoryList(history)
+
+      toast.close(toastIdRef.current)
     }
     fetchHistoryList()
   }, [tabIndex])
@@ -173,6 +183,19 @@ const App = (): React.ReactElement => {
     return new Uint8Array(wavData)
   }
 
+  const toastMessage = (description: string): void => {
+    if (toastIdRef.current) {
+      toast.close(toastIdRef.current)
+      toastIdRef.current = toast({
+        description
+      })
+    } else {
+      toastIdRef.current = toast({
+        description
+      })
+    }
+  }
+
   const transcribeAudioInArrayBuffer = async (
     arrayBufferOverride?: Uint8Array,
     languageOverride?: AvailableLanguageCodes
@@ -183,8 +206,11 @@ const App = (): React.ReactElement => {
       return ''
     }
 
+    toastMessage('Transcribing audio...')
+
     const transcribedAudio = await window.api.transcribeAudio(arrayBuffer, language)
     setTranscription(transcribedAudio)
+
     return transcribedAudio
   }
 
@@ -194,6 +220,8 @@ const App = (): React.ReactElement => {
     if (!textToTranslate) {
       return ''
     }
+
+    toastMessage('Translating text...')
 
     const translation = await window.api.translateText(
       textToTranslate,
@@ -217,7 +245,10 @@ const App = (): React.ReactElement => {
       return
     }
 
+    toastMessage('Generating audio...')
+
     const arrayBuffer = await window.api.textToSpeech(textToGenerate, currentLanguage.name)
+
     setShouldRefetchHistory(true)
     const blob = new Blob([arrayBuffer], { type: 'audio/mpeg' })
     const url = URL.createObjectURL(blob)
@@ -225,17 +256,14 @@ const App = (): React.ReactElement => {
   }
 
   const handleOnInputLanguageChange = (event: React.ChangeEvent<HTMLSelectElement>): void => {
-    console.log('Setting input language to:', event.target.value)
     setInputLanguage(event.target.value as AvailableLanguageCodes)
   }
 
   const handleOnOutputLanguageChange = (event: React.ChangeEvent<HTMLSelectElement>): void => {
-    console.log('Setting output language to:', event.target.value)
     setOutputLanguage(event.target.value as AvailableLanguageCodes)
   }
 
   const handleOnDebugModeChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
-    console.log('Setting debug mode to:', event.target.checked)
     setDebugMode(event.target.checked)
 
     window.resizeTo(WINDOW_WIDTH, event.target.checked ? WINDOW_HEIGHT_DEBUG_MODE : WINDOW_HEIGHT)
