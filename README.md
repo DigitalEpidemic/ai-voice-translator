@@ -3,6 +3,19 @@
 A voice translator and transcriber app created in Electron with React and TypeScript
 ![image](https://github.com/user-attachments/assets/0cb9ff66-5071-4def-ac95-f9a412a9e8fb)
 
+### Input/Output Audio Example: (Unmute to listen)
+<table>
+  <tr>
+    <td>
+      <video src='https://github.com/user-attachments/assets/ea9deb48-3e6a-48fd-bbb6-59181e9428e7'></video>
+    </td>
+    <td>
+      <video src='https://github.com/user-attachments/assets/82c4c136-8839-4d2b-b72a-b023d29d2d54'></video>
+    </td>
+  </tr>
+</table>
+<br/>
+
 # Features
 
 **Note: You must setup Voice Cloning to translate your own voice into any of the 32 supported languages).**
