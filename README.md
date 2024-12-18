@@ -18,7 +18,7 @@ A voice translator and transcriber app created in Electron with React and TypeSc
 
 # Features
 
-**Note: You must setup Voice Cloning to translate your own voice into any of the 32 supported languages).**
+**Note: You must setup Voice Cloning to translate your own voice into any of the 32 supported languages.**
 
 - **Speech-To-Speech**
   - Select your `Input Language` and `Output Language`
